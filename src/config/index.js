@@ -42,7 +42,7 @@ if (process.env.NODE_ENV !== 'test') {
 const config = {
   // Server configuration
   server: {
-    port: parseInt(process.env.PORT, 10) || 5000,
+    port: process.env.PORT ? parseInt(process.env.PORT, 10) : 5000,
     env: process.env.NODE_ENV || 'development',
     isProduction: process.env.NODE_ENV === 'production',
     isDevelopment: process.env.NODE_ENV === 'development'
