@@ -29,7 +29,8 @@ const server = app.listen(config.server.port, '0.0.0.0', () => {
     model: config.openai.model
   });
 
-  logger.info(`📍 Webhook URL: http://localhost:${config.server.port}/webhook`);
+  const publicUrl = process.env.REPLIT_DEV_DOMAIN ? `https://${process.env.REPLIT_DEV_DOMAIN}` : `http://localhost:${config.server.port}`;
+  logger.info(`📍 Webhook URL: ${publicUrl}/webhook`);
 });
 
 // Graceful shutdown handler
