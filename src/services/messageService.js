@@ -1,229 +1,51 @@
 /**
  * Message Service
  * Core business logic for processing messages
- * Implements hybrid approach: Rule-based FAQs + AI fallback
+ * SMART RULE-BASED SYSTEM - NO OpenAI / NO paid APIs
+ * Uses structured knowledge file with intent detection and keyword matching
  */
 
-const fs = require('fs');
-const path = require('path');
 const logger = require('../utils/logger');
 const { sanitizeText, isWithinMessagingWindow } = require('../utils/validator');
 const facebookService = require('./facebookService');
-const openaiService = require('./openaiService');
+const knowledgeParser = require('./knowledgeParser');
 
-// Load knowledge base
-let knowledgeBase = '';
+// Load and parse knowledge base on startup
+let knowledgeData = null;
 try {
-  const knowledgePath = path.join(process.cwd(), 'knowledge.txt');
-  if (fs.existsSync(knowledgePath)) {
-    knowledgeBase = fs.readFileSync(knowledgePath, 'utf8');
-    logger.info('Knowledge base loaded successfully');
+  knowledgeData = knowledgeParser.loadKnowledge();
+  if (knowledgeData) {
+    logger.info('✓ Knowledge base loaded and parsed successfully', {
+      smartResponses: knowledgeData.smartResponses.length,
+      intents: Object.keys(knowledgeData.intents).length,
+      products: knowledgeData.products.length
+    });
+  } else {
+    logger.error('✗ Failed to load knowledge base');
   }
 } catch (error) {
   logger.error('Error loading knowledge base:', error);
 }
 
 /**
- * Searches the knowledge base for a relevant answer
- * Uses keyword matching and context extraction
- * @param {string} message - User message
- * @returns {object|null} Answer object with text and source, or null
+ * REMOVED: Old knowledge search function
+ * Replaced with smart rule-based intent detection system
  */
-const findKnowledgeAnswer = (message) => {
-  if (!knowledgeBase) {
-    logger.warn('Knowledge base not loaded');
-    return null;
-  }
-
-  const lowerMessage = message.toLowerCase();
-  logger.info('Searching knowledge base', { query: message });
-
-  // Split knowledge base into sections
-  const sections = knowledgeBase.split(/\n##\s+/).filter(s => s.trim());
-  
-  // Define search keywords extracted from message
-  const keywords = [
-    // Contact keywords
-    { words: ['phone', 'contact', 'call', 'number', 'رقم', 'اتصال', 'هاتف'], section: 'Contact Information' },
-    { words: ['whatsapp', 'واتساب'], section: 'Contact Information' },
-    
-    // Hours keywords
-    { words: ['hours', 'open', 'time', 'when', 'schedule', 'ساعات', 'مفتوح', 'موعد'], section: 'Working Hours' },
-    
-    // Location keywords
-    { words: ['location', 'address', 'where', 'map', 'عنوان', 'مكان', 'موقع'], section: 'Location & Address' },
-    
-    // Price keywords
-    { words: ['price', 'cost', 'pricing', 'سعر', 'تكلفة', 'اسعار'], section: 'Product Pricing' },
-    
-    // Service keywords
-    { words: ['service', 'paint', 'car', 'building', 'wood', 'خدمة', 'دهان', 'سيارة'], section: 'Services Details' },
-    
-    // Product keywords
-    { words: ['putty', 'filler', 'primer', 'thinner', 'معجون', 'فيلر', 'ثنر'], section: 'Product Pricing' },
-    
-    // Spray booth
-    { words: ['spray', 'booth', 'painting', 'polish', 'كابينة', 'رش'], section: 'Car Spray Booth' }
-  ];
-
-  // Find matching section
-  let matchedSection = null;
-  let matchedKeyword = null;
-  
-  for (const keywordGroup of keywords) {
-    for (const word of keywordGroup.words) {
-      if (lowerMessage.includes(word)) {
-        matchedKeyword = word;
-        matchedSection = keywordGroup.section;
-        logger.info('Keyword matched', { keyword: word, section: matchedSection });
-        break;
-      }
-    }
-    if (matchedSection) break;
-  }
-
-  // If we found a matching section, extract relevant content
-  if (matchedSection) {
-    for (const section of sections) {
-      if (section.toLowerCase().includes(matchedSection.toLowerCase())) {
-        // Extract first few relevant lines (max 15 lines)
-        const lines = section.split('\n').filter(l => l.trim()).slice(0, 15);
-        const response = lines.join('\n');
-        
-        logger.info('✓ Response source: KNOWLEDGE_FILE', {
-          section: matchedSection,
-          keyword: matchedKeyword,
-          responseLength: response.length
-        });
-        
-        return {
-          text: response,
-          source: 'KNOWLEDGE_FILE',
-          section: matchedSection,
-          keyword: matchedKeyword
-        };
-      }
-    }
-  }
-
-  // Fallback: search for any line containing the message keywords
-  const messageWords = lowerMessage.split(/\s+/).filter(w => w.length > 3);
-  
-  for (const section of sections) {
-    const sectionLines = section.split('\n').filter(l => l.trim());
-    
-    for (let i = 0; i < sectionLines.length; i++) {
-      const line = sectionLines[i];
-      const lowerLine = line.toLowerCase();
-      
-      // Check if line contains any significant word from message
-      for (const word of messageWords) {
-        if (lowerLine.includes(word)) {
-          // Return this line and next 5 lines for context
-          const contextLines = sectionLines.slice(i, Math.min(i + 6, sectionLines.length));
-          const response = contextLines.join('\n');
-          
-          logger.info('✓ Response source: KNOWLEDGE_FILE (fallback search)', {
-            matchedWord: word,
-            lineNumber: i,
-            responseLength: response.length
-          });
-          
-          return {
-            text: response,
-            source: 'KNOWLEDGE_FILE',
-            section: 'General Match',
-            keyword: word
-          };
-        }
-      }
-    }
-  }
-
-  logger.info('✗ No knowledge match found', { query: message });
-  return null;
-};
 
 /**
- * FAQ Database - Rule-based responses
- * These are matched first before falling back to AI
+ * REMOVED: Old hardcoded FAQ rules
+ * All responses now come from knowledge.txt file
+ * No hardcoded responses in the code
  */
-const FAQ_RULES = [
-  {
-    keywords: ['hello', 'hi', 'hey', 'greetings', 'good morning', 'good afternoon', 'good evening'],
-    response: '👋 Hello! How can I help you today?',
-    quickReplies: [
-      { title: 'Ask a question', payload: 'ASK_QUESTION' },
-      { title: 'Get help', payload: 'GET_HELP' },
-      { title: 'About us', payload: 'ABOUT_US' }
-    ]
-  },
-  {
-    keywords: ['hours', 'open', 'schedule', 'when open', 'opening hours', 'business hours'],
-    response: '⏰ Our business hours are:\nMonday - Friday: 9:00 AM - 6:00 PM\nSaturday: 10:00 AM - 4:00 PM\nSunday: Closed\n\nHow else can I assist you?'
-  },
-  {
-    keywords: ['contact', 'phone', 'email', 'reach', 'call', 'support'],
-    response: '📞 You can reach us at:\n\nPhone: +1 (555) 123-4567\nEmail: support@example.com\nLive Chat: Right here!\n\nWhat would you like help with?'
-  },
-  {
-    keywords: ['price', 'pricing', 'cost', 'how much', 'fee', 'charge'],
-    response: '💰 Our pricing varies based on your needs. Could you tell me more about what you\'re looking for? I can provide specific pricing information or connect you with our sales team.'
-  },
-  {
-    keywords: ['about', 'who are you', 'what is', 'company', 'about us'],
-    response: '🏢 We\'re a leading provider of innovative solutions designed to help businesses grow. We\'ve been serving customers since 2020 with dedication and excellence.\n\nWould you like to know more about our services?'
-  },
-  {
-    keywords: ['help', 'support', 'assistance', 'need help', 'problem'],
-    response: '🆘 I\'m here to help! You can:\n\n• Ask me questions about our services\n• Get information about pricing and hours\n• Connect with our support team\n• Learn more about our company\n\nWhat would you like to know?'
-  },
-  {
-    keywords: ['thanks', 'thank you', 'appreciate', 'grateful'],
-    response: '😊 You\'re very welcome! Is there anything else I can help you with today?'
-  },
-  {
-    keywords: ['bye', 'goodbye', 'see you', 'later', 'exit'],
-    response: '👋 Goodbye! Feel free to message us anytime. Have a great day!'
-  },
-  {
-    keywords: ['reset', 'restart', 'start over', 'clear history'],
-    response: '🔄 I\'ve cleared our conversation history. Let\'s start fresh! How can I help you?',
-    action: 'clear_history'
-  }
-];
-
-/**
- * Finds a matching FAQ rule based on user message
- * Uses keyword matching with lowercase comparison
- * 
- * @param {string} message - User's message text
- * @returns {object|null} Matching FAQ rule or null
- */
-const findFAQMatch = (message) => {
-  const lowerMessage = message.toLowerCase();
-
-  for (const rule of FAQ_RULES) {
-    // Check if any keyword matches
-    const hasMatch = rule.keywords.some(keyword => 
-      lowerMessage.includes(keyword.toLowerCase())
-    );
-
-    if (hasMatch) {
-      logger.info('FAQ rule matched', {
-        keywords: rule.keywords,
-        message: message.substring(0, 50)
-      });
-      return rule;
-    }
-  }
-
-  return null;
-};
 
 /**
  * Processes an incoming text message
- * Implements hybrid logic: FAQ first, then AI fallback
+ * SMART RULE-BASED SYSTEM - NO OpenAI / NO paid APIs
+ * 
+ * Flow:
+ * 1. Detect intent using keyword matching from knowledge.txt
+ * 2. Return mapped response from knowledge.txt
+ * 3. If no match, return fallback from knowledge.txt
  * 
  * @param {string} senderId - User's Facebook ID (PSID)
  * @param {string} messageText - Message content
@@ -252,84 +74,74 @@ const processTextMessage = async (senderId, messageText, timestamp) => {
       preview: sanitizedText.substring(0, 50)
     });
 
+    // Check if knowledge base is loaded
+    if (!knowledgeData) {
+      logger.error('Knowledge base not loaded');
+      await facebookService.sendTextMessage(
+        senderId,
+        'عذراً، النظام غير متاح حالياً. يرجى المحاولة لاحقاً.'
+      );
+      return;
+    }
+
     // Mark message as seen and show typing indicator
     await Promise.all([
       facebookService.markSeen(senderId),
       facebookService.sendTypingIndicator(senderId, true)
     ]);
 
-    // Step 1: Try knowledge base FIRST
-    logger.info('🔍 Step 1: Searching knowledge base...', { senderId });
-    const knowledgeAnswer = findKnowledgeAnswer(sanitizedText);
+    // ===================================================
+    // SMART INTENT DETECTION - Rule-based matching
+    // ===================================================
     
-    if (knowledgeAnswer) {
-      // Send knowledge-based response
+    console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('🤖 SMART RULE-BASED SYSTEM');
+    console.log(`📨 User query: "${sanitizedText}"`);
+    console.log('🔍 Detecting intent...');
+    
+    // Detect intent using smart keyword matching
+    const detectedIntent = knowledgeParser.detectIntent(sanitizedText, knowledgeData);
+    
+    if (detectedIntent) {
+      // Intent matched - send response from knowledge.txt
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.log('✓ Response source: KNOWLEDGE_FILE');
-      console.log(`  Section: ${knowledgeAnswer.section}`);
-      console.log(`  Keyword matched: ${knowledgeAnswer.keyword}`);
-      console.log(`  User query: "${sanitizedText}"`);
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('✅ INTENT MATCHED');
+      console.log(`   Type: ${detectedIntent.type}`);
+      console.log(`   Intent: ${detectedIntent.intent}`);
+      console.log(`   Keyword: ${detectedIntent.matchedKeyword || 'N/A'}`);
+      console.log(`   Confidence: ${detectedIntent.confidence}`);
+      console.log('   Source: knowledge.txt');
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
       
-      await facebookService.sendTextMessage(senderId, knowledgeAnswer.text);
-      logger.info('✓ Sent knowledge base response', { 
+      // Send the response from knowledge file
+      await facebookService.sendTextMessage(senderId, detectedIntent.response);
+      
+      logger.info('✓ Sent intent-based response', { 
         senderId,
         source: 'KNOWLEDGE_FILE',
-        section: knowledgeAnswer.section
+        intentType: detectedIntent.type,
+        intent: detectedIntent.intent,
+        confidence: detectedIntent.confidence
       });
+      
     } else {
-      // Step 2: Try FAQ rules as secondary fallback
-      logger.info('🔍 Step 2: Trying FAQ rules...', { senderId });
-      const faqMatch = findFAQMatch(sanitizedText);
-
-      if (faqMatch) {
-        // Handle special actions
-        if (faqMatch.action === 'clear_history') {
-          // Note: History clearing not needed in knowledge-only mode
-          logger.info('Reset command received (no history to clear in knowledge-only mode)');
-        }
-
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-        console.log('✓ Response source: FAQ_RULES');
-        console.log(`  Matched keywords: ${faqMatch.keywords.join(', ')}`);
-        console.log(`  User query: "${sanitizedText}"`);
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-
-        // Send rule-based response
-        if (faqMatch.quickReplies) {
-          await facebookService.sendQuickReply(
-            senderId,
-            faqMatch.response,
-            faqMatch.quickReplies
-          );
-        } else {
-          await facebookService.sendTextMessage(senderId, faqMatch.response);
-        }
-
-        logger.info('✓ Sent FAQ response', { senderId, source: 'FAQ_RULES' });
-      } else {
-        // Step 3: No match found - send static fallback (NO AI)
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-        console.log('✗ NO MATCH FOUND - Using static fallback');
-        console.log(`  User query: "${sanitizedText}"`);
-        console.log('  AI/OpenAI: DISABLED');
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-        
-        logger.warn('No knowledge or FAQ match found', { senderId, query: sanitizedText });
-
-        // Static fallback message - NO AI
-        await facebookService.sendTextMessage(
-          senderId,
-          "⚠️ I couldn't find specific information about that in our knowledge base.\n\n" +
-          "📞 Please contact customer service for more details:\n" +
-          "• Wholesale: 01155501111\n" +
-          "• Store: 01124400797\n" +
-          "• Spray Booth: 01017782299\n\n" +
-          "Or type 'help' to see what I can assist with."
-        );
-        
-        logger.info('✓ Sent static fallback response', { senderId, source: 'STATIC_FALLBACK' });
-      }
+      // No intent matched - use fallback from knowledge.txt
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('⚠️  NO INTENT MATCHED');
+      console.log('   Using fallback response from knowledge.txt');
+      console.log('   Source: knowledge.txt [FALLBACK]');
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+      
+      // Get fallback response from knowledge file
+      const fallbackResponse = knowledgeParser.getFallbackResponse(knowledgeData);
+      
+      await facebookService.sendTextMessage(senderId, fallbackResponse);
+      
+      logger.info('✓ Sent fallback response', { 
+        senderId,
+        source: 'KNOWLEDGE_FILE_FALLBACK',
+        query: sanitizedText
+      });
     }
 
     // Turn off typing indicator
@@ -346,7 +158,7 @@ const processTextMessage = async (senderId, messageText, timestamp) => {
     try {
       await facebookService.sendTextMessage(
         senderId,
-        "I apologize, but I'm experiencing technical difficulties. Please try again in a moment."
+        'عذراً، حدث خطأ فني. يرجى المحاولة مرة أخرى.'
       );
     } catch (sendError) {
       logger.error('Failed to send error message to user', {
@@ -489,6 +301,5 @@ const processAttachment = async (senderId, attachments) => {
 module.exports = {
   processTextMessage,
   processPostback,
-  processAttachment,
-  findFAQMatch // Exported for testing
+  processAttachment
 };
