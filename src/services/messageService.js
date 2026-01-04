@@ -4,10 +4,42 @@
  * Implements hybrid approach: Rule-based FAQs + AI fallback
  */
 
+const fs = require('fs');
+const path = require('path');
 const logger = require('../utils/logger');
 const { sanitizeText, isWithinMessagingWindow } = require('../utils/validator');
 const facebookService = require('./facebookService');
 const openaiService = require('./openaiService');
+
+// Load knowledge base
+let knowledgeBase = '';
+try {
+  const knowledgePath = path.join(process.cwd(), 'knowledge.txt');
+  if (fs.existsSync(knowledgePath)) {
+    knowledgeBase = fs.readFileSync(knowledgePath, 'utf8');
+    logger.info('Knowledge base loaded successfully');
+  }
+} catch (error) {
+  logger.error('Error loading knowledge base:', error);
+}
+
+/**
+ * Searches the knowledge base for a relevant answer
+ * @param {string} message - User message
+ * @returns {string|null} Answer or null
+ */
+const findKnowledgeAnswer = (message) => {
+  if (!knowledgeBase) return null;
+  const lines = knowledgeBase.split('\n').filter(line => line.trim());
+  const lowerMessage = message.toLowerCase();
+  
+  for (const line of lines) {
+    if (line.toLowerCase().includes(lowerMessage)) {
+      return line;
+    }
+  }
+  return null;
+};
 
 /**
  * FAQ Database - Rule-based responses
@@ -145,28 +177,35 @@ const processTextMessage = async (senderId, messageText, timestamp) => {
 
       logger.info('Sent FAQ response', { senderId });
     } else {
-      // Step 2: Fall back to AI for complex or unknown queries
-      logger.info('No FAQ match, using AI fallback', { senderId });
+      // Step 2: Try knowledge base
+      const knowledgeAnswer = findKnowledgeAnswer(sanitizedText);
+      if (knowledgeAnswer) {
+        await facebookService.sendTextMessage(senderId, knowledgeAnswer);
+        logger.info('Sent knowledge base response', { senderId });
+      } else {
+        // Step 3: Fall back to AI
+        logger.info('No FAQ or knowledge match, using AI fallback', { senderId });
 
-      try {
-        const aiResponse = await openaiService.generateAIResponse(
-          sanitizedText,
-          senderId
-        );
+        try {
+          const aiResponse = await openaiService.generateAIResponse(
+            sanitizedText,
+            senderId
+          );
 
-        await facebookService.sendTextMessage(senderId, aiResponse);
-        logger.info('Sent AI response', { senderId });
-      } catch (aiError) {
-        logger.error('AI generation failed, sending fallback message', {
-          error: aiError.message,
-          senderId
-        });
+          await facebookService.sendTextMessage(senderId, aiResponse);
+          logger.info('Sent AI response', { senderId });
+        } catch (aiError) {
+          logger.error('AI generation failed, sending fallback message', {
+            error: aiError.message,
+            senderId
+          });
 
-        // Fallback response if AI fails
-        await facebookService.sendTextMessage(
-          senderId,
-          "I'm having trouble understanding that right now. Could you rephrase your question, or type 'help' to see what I can assist with?"
-        );
+          // Fallback response if AI fails
+          await facebookService.sendTextMessage(
+            senderId,
+            "I'm having trouble understanding that right now. Could you rephrase your question, or type 'help' to see what I can assist with?"
+          );
+        }
       }
     }
 
