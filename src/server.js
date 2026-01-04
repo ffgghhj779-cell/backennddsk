@@ -24,9 +24,9 @@ const server = app.listen(config.server.port, '0.0.0.0', () => {
     appSecret: config.facebook.appSecret ? '✓ Set' : '✗ Not set'
   });
 
-  logger.info('🤖 OpenAI integration ready', {
-    apiKey: config.openai.apiKey ? '✓ Set' : '✗ Not set',
-    model: config.openai.model
+  logger.info('🤖 Bot Mode: KNOWLEDGE-ONLY (AI/OpenAI DISABLED)', {
+    knowledgeFile: 'knowledge.txt',
+    aiEnabled: false
   });
 
   const publicUrl = process.env.REPLIT_DEV_DOMAIN ? `https://${process.env.REPLIT_DEV_DOMAIN}` : `http://localhost:${config.server.port}`;

@@ -25,19 +25,122 @@ try {
 
 /**
  * Searches the knowledge base for a relevant answer
+ * Uses keyword matching and context extraction
  * @param {string} message - User message
- * @returns {string|null} Answer or null
+ * @returns {object|null} Answer object with text and source, or null
  */
 const findKnowledgeAnswer = (message) => {
-  if (!knowledgeBase) return null;
-  const lines = knowledgeBase.split('\n').filter(line => line.trim());
+  if (!knowledgeBase) {
+    logger.warn('Knowledge base not loaded');
+    return null;
+  }
+
   const lowerMessage = message.toLowerCase();
+  logger.info('Searching knowledge base', { query: message });
+
+  // Split knowledge base into sections
+  const sections = knowledgeBase.split(/\n##\s+/).filter(s => s.trim());
   
-  for (const line of lines) {
-    if (line.toLowerCase().includes(lowerMessage)) {
-      return line;
+  // Define search keywords extracted from message
+  const keywords = [
+    // Contact keywords
+    { words: ['phone', 'contact', 'call', 'number', 'رقم', 'اتصال', 'هاتف'], section: 'Contact Information' },
+    { words: ['whatsapp', 'واتساب'], section: 'Contact Information' },
+    
+    // Hours keywords
+    { words: ['hours', 'open', 'time', 'when', 'schedule', 'ساعات', 'مفتوح', 'موعد'], section: 'Working Hours' },
+    
+    // Location keywords
+    { words: ['location', 'address', 'where', 'map', 'عنوان', 'مكان', 'موقع'], section: 'Location & Address' },
+    
+    // Price keywords
+    { words: ['price', 'cost', 'pricing', 'سعر', 'تكلفة', 'اسعار'], section: 'Product Pricing' },
+    
+    // Service keywords
+    { words: ['service', 'paint', 'car', 'building', 'wood', 'خدمة', 'دهان', 'سيارة'], section: 'Services Details' },
+    
+    // Product keywords
+    { words: ['putty', 'filler', 'primer', 'thinner', 'معجون', 'فيلر', 'ثنر'], section: 'Product Pricing' },
+    
+    // Spray booth
+    { words: ['spray', 'booth', 'painting', 'polish', 'كابينة', 'رش'], section: 'Car Spray Booth' }
+  ];
+
+  // Find matching section
+  let matchedSection = null;
+  let matchedKeyword = null;
+  
+  for (const keywordGroup of keywords) {
+    for (const word of keywordGroup.words) {
+      if (lowerMessage.includes(word)) {
+        matchedKeyword = word;
+        matchedSection = keywordGroup.section;
+        logger.info('Keyword matched', { keyword: word, section: matchedSection });
+        break;
+      }
+    }
+    if (matchedSection) break;
+  }
+
+  // If we found a matching section, extract relevant content
+  if (matchedSection) {
+    for (const section of sections) {
+      if (section.toLowerCase().includes(matchedSection.toLowerCase())) {
+        // Extract first few relevant lines (max 15 lines)
+        const lines = section.split('\n').filter(l => l.trim()).slice(0, 15);
+        const response = lines.join('\n');
+        
+        logger.info('✓ Response source: KNOWLEDGE_FILE', {
+          section: matchedSection,
+          keyword: matchedKeyword,
+          responseLength: response.length
+        });
+        
+        return {
+          text: response,
+          source: 'KNOWLEDGE_FILE',
+          section: matchedSection,
+          keyword: matchedKeyword
+        };
+      }
     }
   }
+
+  // Fallback: search for any line containing the message keywords
+  const messageWords = lowerMessage.split(/\s+/).filter(w => w.length > 3);
+  
+  for (const section of sections) {
+    const sectionLines = section.split('\n').filter(l => l.trim());
+    
+    for (let i = 0; i < sectionLines.length; i++) {
+      const line = sectionLines[i];
+      const lowerLine = line.toLowerCase();
+      
+      // Check if line contains any significant word from message
+      for (const word of messageWords) {
+        if (lowerLine.includes(word)) {
+          // Return this line and next 5 lines for context
+          const contextLines = sectionLines.slice(i, Math.min(i + 6, sectionLines.length));
+          const response = contextLines.join('\n');
+          
+          logger.info('✓ Response source: KNOWLEDGE_FILE (fallback search)', {
+            matchedWord: word,
+            lineNumber: i,
+            responseLength: response.length
+          });
+          
+          return {
+            text: response,
+            source: 'KNOWLEDGE_FILE',
+            section: 'General Match',
+            keyword: word
+          };
+        }
+      }
+    }
+  }
+
+  logger.info('✗ No knowledge match found', { query: message });
   return null;
 };
 
@@ -155,57 +258,77 @@ const processTextMessage = async (senderId, messageText, timestamp) => {
       facebookService.sendTypingIndicator(senderId, true)
     ]);
 
-    // Step 1: Try to match FAQ rules
-    const faqMatch = findFAQMatch(sanitizedText);
-
-    if (faqMatch) {
-      // Handle special actions
-      if (faqMatch.action === 'clear_history') {
-        openaiService.clearConversationHistory(senderId);
-      }
-
-      // Send rule-based response
-      if (faqMatch.quickReplies) {
-        await facebookService.sendQuickReply(
-          senderId,
-          faqMatch.response,
-          faqMatch.quickReplies
-        );
-      } else {
-        await facebookService.sendTextMessage(senderId, faqMatch.response);
-      }
-
-      logger.info('Sent FAQ response', { senderId });
+    // Step 1: Try knowledge base FIRST
+    logger.info('🔍 Step 1: Searching knowledge base...', { senderId });
+    const knowledgeAnswer = findKnowledgeAnswer(sanitizedText);
+    
+    if (knowledgeAnswer) {
+      // Send knowledge-based response
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('✓ Response source: KNOWLEDGE_FILE');
+      console.log(`  Section: ${knowledgeAnswer.section}`);
+      console.log(`  Keyword matched: ${knowledgeAnswer.keyword}`);
+      console.log(`  User query: "${sanitizedText}"`);
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      
+      await facebookService.sendTextMessage(senderId, knowledgeAnswer.text);
+      logger.info('✓ Sent knowledge base response', { 
+        senderId,
+        source: 'KNOWLEDGE_FILE',
+        section: knowledgeAnswer.section
+      });
     } else {
-      // Step 2: Try knowledge base
-      const knowledgeAnswer = findKnowledgeAnswer(sanitizedText);
-      if (knowledgeAnswer) {
-        await facebookService.sendTextMessage(senderId, knowledgeAnswer);
-        logger.info('Sent knowledge base response', { senderId });
-      } else {
-        // Step 3: Fall back to AI
-        logger.info('No FAQ or knowledge match, using AI fallback', { senderId });
+      // Step 2: Try FAQ rules as secondary fallback
+      logger.info('🔍 Step 2: Trying FAQ rules...', { senderId });
+      const faqMatch = findFAQMatch(sanitizedText);
 
-        try {
-          const aiResponse = await openaiService.generateAIResponse(
-            sanitizedText,
-            senderId
-          );
-
-          await facebookService.sendTextMessage(senderId, aiResponse);
-          logger.info('Sent AI response', { senderId });
-        } catch (aiError) {
-          logger.error('AI generation failed, sending fallback message', {
-            error: aiError.message,
-            senderId
-          });
-
-          // Fallback response if AI fails
-          await facebookService.sendTextMessage(
-            senderId,
-            "I'm having trouble understanding that right now. Could you rephrase your question, or type 'help' to see what I can assist with?"
-          );
+      if (faqMatch) {
+        // Handle special actions
+        if (faqMatch.action === 'clear_history') {
+          // Note: History clearing not needed in knowledge-only mode
+          logger.info('Reset command received (no history to clear in knowledge-only mode)');
         }
+
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        console.log('✓ Response source: FAQ_RULES');
+        console.log(`  Matched keywords: ${faqMatch.keywords.join(', ')}`);
+        console.log(`  User query: "${sanitizedText}"`);
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+        // Send rule-based response
+        if (faqMatch.quickReplies) {
+          await facebookService.sendQuickReply(
+            senderId,
+            faqMatch.response,
+            faqMatch.quickReplies
+          );
+        } else {
+          await facebookService.sendTextMessage(senderId, faqMatch.response);
+        }
+
+        logger.info('✓ Sent FAQ response', { senderId, source: 'FAQ_RULES' });
+      } else {
+        // Step 3: No match found - send static fallback (NO AI)
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        console.log('✗ NO MATCH FOUND - Using static fallback');
+        console.log(`  User query: "${sanitizedText}"`);
+        console.log('  AI/OpenAI: DISABLED');
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        
+        logger.warn('No knowledge or FAQ match found', { senderId, query: sanitizedText });
+
+        // Static fallback message - NO AI
+        await facebookService.sendTextMessage(
+          senderId,
+          "⚠️ I couldn't find specific information about that in our knowledge base.\n\n" +
+          "📞 Please contact customer service for more details:\n" +
+          "• Wholesale: 01155501111\n" +
+          "• Store: 01124400797\n" +
+          "• Spray Booth: 01017782299\n\n" +
+          "Or type 'help' to see what I can assist with."
+        );
+        
+        logger.info('✓ Sent static fallback response', { senderId, source: 'STATIC_FALLBACK' });
       }
     }
 
