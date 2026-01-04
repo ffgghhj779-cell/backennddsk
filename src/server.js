@@ -10,8 +10,8 @@ const logger = require('./utils/logger');
 // Create Express app
 const app = createApp();
 
-// Start server
-const server = app.listen(config.server.port, () => {
+// Start server - bind to 0.0.0.0 for Replit environment
+const server = app.listen(config.server.port, '0.0.0.0', () => {
   logger.info('🚀 Server started successfully', {
     port: config.server.port,
     environment: config.server.env,

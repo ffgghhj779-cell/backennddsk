@@ -7,10 +7,15 @@ const OpenAI = require('openai');
 const config = require('../config');
 const logger = require('../utils/logger');
 
-// Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: config.openai.apiKey
-});
+// Initialize OpenAI client only if API key is available
+let openai = null;
+if (config.openai.apiKey) {
+  openai = new OpenAI({
+    apiKey: config.openai.apiKey
+  });
+} else {
+  logger.warn('OpenAI API key not configured. AI features will be unavailable.');
+}
 
 /**
  * Generates a conversational history object for OpenAI
@@ -70,6 +75,10 @@ const conversationContext = new ConversationContext();
  * @returns {Promise<string>} AI-generated response
  */
 const generateAIResponse = async (userMessage, userId, options = {}) => {
+  if (!openai) {
+    throw new Error('OpenAI is not configured. Please set the OPENAI_API_KEY environment variable.');
+  }
+  
   try {
     logger.info(`Generating AI response for user ${userId}`);
 
@@ -152,6 +161,10 @@ ${options.systemContext || ''}`
  * @returns {Promise<string>} AI-generated response
  */
 const generateContextualResponse = async (prompt, systemContext) => {
+  if (!openai) {
+    throw new Error('OpenAI is not configured. Please set the OPENAI_API_KEY environment variable.');
+  }
+  
   try {
     logger.info('Generating contextual AI response');
 

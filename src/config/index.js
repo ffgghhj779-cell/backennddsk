@@ -8,7 +8,7 @@ require('dotenv').config();
 
 /**
  * Validates required environment variables
- * @throws {Error} If required variables are missing
+ * Logs warnings instead of throwing errors in development mode
  */
 const validateConfig = () => {
   const required = [
@@ -20,10 +20,14 @@ const validateConfig = () => {
   const missing = required.filter(key => !process.env[key]);
 
   if (missing.length > 0) {
-    throw new Error(
-      `Missing required environment variables: ${missing.join(', ')}\n` +
-      'Please check your .env file and ensure all required variables are set.'
-    );
+    const message = `Missing environment variables: ${missing.join(', ')}. ` +
+      'Some features may not work until these are configured.';
+    
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error(message);
+    } else {
+      console.warn('⚠️ ' + message);
+    }
   }
 };
 
@@ -38,7 +42,7 @@ if (process.env.NODE_ENV !== 'test') {
 const config = {
   // Server configuration
   server: {
-    port: parseInt(process.env.PORT, 10) || 3000,
+    port: parseInt(process.env.PORT, 10) || 5000,
     env: process.env.NODE_ENV || 'development',
     isProduction: process.env.NODE_ENV === 'production',
     isDevelopment: process.env.NODE_ENV === 'development'
