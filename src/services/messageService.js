@@ -295,6 +295,19 @@ const loadSystemRules = () => {
 let knowledge = loadKnowledge();
 let systemRules = loadSystemRules();
 
+// Debug: Log what was loaded
+if (knowledge) {
+  console.log('\n' + '='.repeat(80));
+  console.log('📚 KNOWLEDGE LOADED ON STARTUP');
+  console.log('='.repeat(80));
+  console.log(`Products loaded: ${knowledge.products.length}`);
+  console.log('Products:', knowledge.products);
+  console.log(`Intents loaded: ${Object.keys(knowledge.intents).length}`);
+  console.log(`Responses loaded: ${Object.keys(knowledge.responses).length}`);
+  console.log(`Smart responses loaded: ${knowledge.smartResponses.length}`);
+  console.log('='.repeat(80) + '\n');
+}
+
 // ============================================================================
 // INTENT DETECTION AND RESPONSE LOGIC
 // ============================================================================
@@ -427,12 +440,19 @@ const detectIntent = (message) => {
   // Priority 4: Check PRODUCTS keywords
   // Apply PRICING_RULES: Must have product name + size + quantity
   // Extract core product keywords from each product (ignore modifiers like "سيارات")
+  
+  console.log(`\n🔍 Checking ${knowledge.products.length} products...`);
+  console.log(`User message (normalized): "${normalized}"`);
+  
   for (const product of knowledge.products) {
     const normalizedProduct = normalizeArabic(product);
     
     // Split product into words and check each core keyword
     // e.g., "معجون سيارات" => check for "معجون"
     const productWords = normalizedProduct.split(' ').filter(w => w.length > 2);
+    
+    console.log(`  Checking product: "${product}" => normalized: "${normalizedProduct}"`);
+    console.log(`  Product words: [${productWords.join(', ')}]`);
     
     // Check if any significant product keyword appears in the message
     let productMatched = false;
@@ -442,13 +462,16 @@ const detectIntent = (message) => {
       // Skip common/generic words
       const skipWords = ['سيارات', 'مباني', 'خشب', 'مواد', 'مساعده', 'للورش'];
       if (skipWords.some(skip => normalizeArabic(skip) === word)) {
+        console.log(`    Skipping generic word: "${word}"`);
         continue;
       }
       
       // Check if this product keyword is in the message
+      console.log(`    Checking if "${normalized}" includes "${word}": ${normalized.includes(word)}`);
       if (normalized.includes(word)) {
         productMatched = true;
         matchedKeyword = word;
+        console.log(`    ✅ MATCH FOUND! Keyword: "${word}"`);
         break;
       }
     }
