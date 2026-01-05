@@ -27,7 +27,7 @@
       "name": "استفسار عن السعر",
       "priority": "high",
       "keywords": [
-        "سعر", "أسعار", "بكام", "كام", "تكلفة", "ثمن", "price", "cost"
+        "سعر", "اسعار", "أسعار", "بكام", "كام", "تكلفة", "تكلفه", "ثمن", "price", "cost", "عايز اسأل عن", "عايز اعرف", "محتاج اعرف"
       ],
       "required_info": ["product_name", "size", "quantity"],
       "response_type": "price_request_details",
@@ -39,7 +39,9 @@
       "priority": "high",
       "keywords": [
         "معجون", "فيلر", "برايمر", "ثنر", "سبراي", "دوكو",
-        "دهان", "منتج", "عندكم", "متوفر", "product", "available"
+        "دهان", "منتج", "منتجات", "عندكم", "متوفر", "موجود", "متوفره",
+        "product", "available", "المنتجات اللي موجودة", "المنتجات الموجوده",
+        "ايه اللي عندكم", "عندكم ايه", "putty", "filler", "primer", "thinner", "spray"
       ],
       "response_type": "product_info",
       "should_include_catalog": true
