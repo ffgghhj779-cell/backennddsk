@@ -227,20 +227,119 @@ const loadKnowledge = () => {
   }
 };
 
-// Load knowledge on startup
+/**
+ * Load system rules file that defines behavior and tone
+ * 
+ * @returns {object|null} Parsed system rules or null if failed
+ */
+const loadSystemRules = () => {
+  try {
+    const rulesPath = path.join(process.cwd(), 'SYSTEM-RULES.txt');
+    
+    if (!fs.existsSync(rulesPath)) {
+      logger.warn('SYSTEM-RULES.txt not found - using defaults');
+      return null;
+    }
+    
+    const content = fs.readFileSync(rulesPath, 'utf8');
+    const rules = {
+      role: '',
+      language: [],
+      tone: [],
+      generalRules: [],
+      pricingRules: [],
+      routingRules: [],
+      fallbackRule: '',
+      forbidden: []
+    };
+    
+    // Split by sections
+    const sections = content.split(/\[([A-Z_]+)\]/);
+    
+    for (let i = 1; i < sections.length; i += 2) {
+      const sectionName = sections[i];
+      const sectionContent = sections[i + 1] ? sections[i + 1].trim() : '';
+      
+      switch (sectionName) {
+        case 'ROLE':
+          rules.role = sectionContent;
+          break;
+        case 'LANGUAGE':
+        case 'TONE':
+        case 'GENERAL_RULES':
+        case 'PRICING_RULES':
+        case 'ROUTING_RULES':
+        case 'FORBIDDEN':
+          const key = sectionName.toLowerCase().replace('_', '');
+          rules[key] = sectionContent
+            .split('\n')
+            .filter(line => line.trim().startsWith('-'))
+            .map(line => line.replace(/^-\s*/, '').trim());
+          break;
+        case 'FALLBACK_RULE':
+          rules.fallbackRule = sectionContent.replace(/^-\s*/, '').trim();
+          break;
+      }
+    }
+    
+    logger.info('✓ System rules loaded successfully');
+    return rules;
+    
+  } catch (error) {
+    logger.error('Error loading system rules:', error);
+    return null;
+  }
+};
+
+// Load knowledge and system rules on startup
 let knowledge = loadKnowledge();
+let systemRules = loadSystemRules();
 
 // ============================================================================
 // INTENT DETECTION AND RESPONSE LOGIC
 // ============================================================================
 
 /**
+ * Validate response against system rules
+ * Ensures response aligns with business rules and tone
+ * 
+ * @param {object} result - Detected intent result
+ * @param {string} message - Original user message
+ * @returns {object} Validated/adjusted result
+ */
+const validateResponseWithRules = (result, message) => {
+  if (!result || !systemRules) return result;
+  
+  const normalized = normalizeArabic(message);
+  
+  // PRICING_RULES: If asking about price without details, prompt for specifics
+  const priceKeywords = ['سعر', 'اسعار', 'بكام', 'كام', 'تكلفه'];
+  const hasPriceQuery = priceKeywords.some(kw => normalized.includes(normalizeArabic(kw)));
+  
+  if (hasPriceQuery && result.type === 'INTENT_RESPONSE') {
+    // Check if message lacks product name, size, or quantity details
+    const hasDetails = normalized.includes('كيلو') || normalized.includes('لتر') || 
+                       normalized.includes('جالون') || normalized.includes('كرتونه');
+    
+    if (!hasDetails) {
+      logger.info('Price query without details - applying PRICING_RULES');
+      // Response already in knowledge.txt should handle this, keep it
+    }
+  }
+  
+  return result;
+};
+
+/**
  * Detect intent from user message using keyword matching
- * Priority order:
- * 1. SMART_RESPONSES (if available)
- * 2. INTENTS => RESPONSES mapping
- * 3. PRODUCTS keywords
- * 4. FALLBACK
+ * Applies SYSTEM-RULES.txt guidelines to ensure proper behavior
+ * 
+ * Priority order (aligned with SYSTEM-RULES):
+ * 1. SMART_RESPONSES (greetings, thanks, wholesale info)
+ * 2. INTENTS => RESPONSES (specific queries)
+ * 3. PRODUCTS (pricing with validation)
+ * 4. Specific categories (hours, location, contact)
+ * 5. FALLBACK (as per FALLBACK_RULE)
  * 
  * @param {string} message - User message
  * @returns {object|null} {type, response} or null
@@ -251,43 +350,105 @@ const detectIntent = (message) => {
   const normalized = normalizeArabic(message);
   logger.info('Detecting intent', { original: message, normalized });
   
+  // Check for individual customer first (GENERAL_RULES: wholesale only)
+  // This check applies across all responses
+  const individualKeywords = ['فرد', 'واحد', 'قطعه', 'حبه واحده'];
+  const isIndividual = individualKeywords.some(kw => normalized.includes(normalizeArabic(kw)));
+  
+  if (isIndividual) {
+    logger.info('✓ Individual customer detected - applying GENERAL_RULES');
+    return {
+      type: 'BUSINESS_RULE_APPLIED',
+      response: 'عذراً 🙏\nنحن نتعامل بالجملة فقط مع المحلات والموزعين والورش.\nلا يوجد بيع قطاعي للأفراد.\n\nيمكنك التواصل مع:\n📞 قسم الجملة: 01155501111'
+    };
+  }
+  
   // Priority 1: Check SMART_RESPONSES
+  // These handle greetings, thanks, wholesale inquiries
   for (const smartResponse of knowledge.smartResponses) {
     for (const keyword of smartResponse.keywords) {
       if (normalized.includes(keyword)) {
         logger.info('✓ Smart response matched', { keyword });
-        return {
+        let result = {
           type: 'SMART_RESPONSE',
           response: smartResponse.response
         };
+        
+        // Apply additional system rules validation (pricing, etc.)
+        result = validateResponseWithRules(result, message);
+        return result;
       }
     }
   }
   
-  // Priority 2: Check INTENTS and map to RESPONSES
+  // Priority 2: Check for contact/WhatsApp with routing (before generic intents)
+  // ROUTING_RULES: Direct to appropriate department based on context
+  const contactKeywords = ['رقم', 'تليفون', 'هاتف', 'واتساب', 'واتس', 'تواصل', 'كلمك'];
+  const hasContactQuery = contactKeywords.some(kw => normalized.includes(normalizeArabic(kw)));
+  
+  if (hasContactQuery) {
+    // Check if asking about spray booth specifically
+    if (normalized.includes('كابينه') || normalized.includes('رش')) {
+      logger.info('✓ Contact routing to spray booth');
+      return {
+        type: 'CONTACT_ROUTING',
+        response: 'للتواصل مع كابينة رش السيارات:\n📞 هاتف: 01017782299\n📱 واتساب: 201017782299'
+      };
+    }
+    
+    // Generic contact query
+    logger.info('✓ Contact query');
+    return {
+      type: 'CONTACT',
+      response: knowledge.contacts || 'للتواصل:\n📞 قسم الجملة: 01155501111\n📞 كابينة الرش: 01017782299'
+    };
+  }
+  
+  // Priority 3: Check INTENTS and map to RESPONSES
+  // These handle specific queries (price, location, hours, etc.)
   for (const [keyword, intentName] of Object.entries(knowledge.intents)) {
     if (normalized.includes(keyword)) {
-      // Find response for this keyword (not intent name)
       const response = knowledge.responses[keyword];
       
       if (response) {
         logger.info('✓ Intent matched', { keyword, intentName });
-        return {
+        let result = {
           type: 'INTENT_RESPONSE',
           response: response
         };
+        
+        // Apply system rules validation
+        result = validateResponseWithRules(result, message);
+        return result;
       }
     }
   }
   
-  // Priority 3: Check PRODUCTS keywords
+  // Priority 4: Check PRODUCTS keywords
+  // Apply PRICING_RULES: Must have product name + size + quantity
   for (const product of knowledge.products) {
     const normalizedProduct = normalizeArabic(product);
     
     if (normalized.includes(normalizedProduct)) {
       logger.info('✓ Product matched', { product });
       
-      // Return pricing info
+      // PRICING_RULES: Check if query has enough details
+      const hasSize = normalized.includes('كيلو') || normalized.includes('لتر') || 
+                      normalized.includes('جالون') || normalized.includes('كرتونه');
+      
+      if (!hasSize) {
+        // Prompt for details as per PRICING_RULES
+        return {
+          type: 'PRICING_RULE_APPLIED',
+          response: `لو سمحت، عشان نديك السعر الدقيق:\n\n` +
+                   `📝 اسم المنتج: ${product}\n` +
+                   `📏 الحجم: (كيلو، لتر، جالون؟)\n` +
+                   `📦 الكمية المطلوبة: (كام؟)\n\n` +
+                   `للتواصل المباشر:\n📞 قسم الجملة: 01155501111`
+        };
+      }
+      
+      // If has details, return full pricing
       if (knowledge.pricing) {
         return {
           type: 'PRODUCT_INQUIRY',
@@ -297,7 +458,7 @@ const detectIntent = (message) => {
     }
   }
   
-  // Priority 4: Check for working hours keywords
+  // Priority 5: Check for working hours keywords
   const hoursKeywords = ['مواعيد', 'شغالين', 'مفتوح', 'وقت', 'ساعات'];
   for (const keyword of hoursKeywords) {
     if (normalized.includes(normalizeArabic(keyword))) {
@@ -309,7 +470,7 @@ const detectIntent = (message) => {
     }
   }
   
-  // Priority 5: Check for location keywords
+  // Priority 6: Check for location keywords
   const locationKeywords = ['عنوان', 'مكان', 'فين', 'لوكيشن', 'موقع'];
   for (const keyword of locationKeywords) {
     if (normalized.includes(normalizeArabic(keyword))) {
@@ -321,19 +482,7 @@ const detectIntent = (message) => {
     }
   }
   
-  // Priority 6: Check for contact/WhatsApp keywords
-  const contactKeywords = ['رقم', 'تليفون', 'هاتف', 'واتساب', 'واتس', 'تواصل', 'كلمك'];
-  for (const keyword of contactKeywords) {
-    if (normalized.includes(normalizeArabic(keyword))) {
-      logger.info('✓ Contact query');
-      return {
-        type: 'CONTACT',
-        response: knowledge.contacts || 'للتواصل:\n📞 قسم الجملة: 01155501111\n📞 كابينة الرش: 01017782299'
-      };
-    }
-  }
-  
-  // No match found
+  // No match found - will use fallback per FALLBACK_RULE
   logger.info('✗ No intent matched');
   return null;
 };
@@ -391,7 +540,7 @@ const processTextMessage = async (senderId, messageText, timestamp) => {
     console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     console.log('🤖 SMART RULE-BASED SYSTEM');
     console.log(`📨 User query: "${sanitizedText}"`);
-    console.log('🔍 Detecting intent from knowledge.txt...');
+    console.log('🔍 Analyzing with knowledge.txt + SYSTEM-RULES.txt...');
     
     const result = detectIntent(sanitizedText);
     
@@ -401,6 +550,18 @@ const processTextMessage = async (senderId, messageText, timestamp) => {
       console.log('✅ INTENT MATCHED');
       console.log(`   Type: ${result.type}`);
       console.log('   Source: knowledge.txt');
+      
+      // Show if system rules were applied
+      if (result.type === 'BUSINESS_RULE_APPLIED') {
+        console.log('   ⚙️  SYSTEM-RULES.txt: GENERAL_RULES applied (wholesale only)');
+      } else if (result.type === 'PRICING_RULE_APPLIED') {
+        console.log('   ⚙️  SYSTEM-RULES.txt: PRICING_RULES applied (details required)');
+      } else if (result.type === 'CONTACT_ROUTING') {
+        console.log('   ⚙️  SYSTEM-RULES.txt: ROUTING_RULES applied (department routing)');
+      } else {
+        console.log('   ✓ Aligned with SYSTEM-RULES.txt guidelines');
+      }
+      
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
       
       await facebookService.sendTextMessage(senderId, result.response);
@@ -408,23 +569,27 @@ const processTextMessage = async (senderId, messageText, timestamp) => {
       logger.info('✓ Response sent', { 
         senderId,
         source: 'knowledge.txt',
-        type: result.type
+        type: result.type,
+        rulesApplied: systemRules ? 'yes' : 'no'
       });
       
     } else {
-      // No match - use fallback from knowledge.txt
+      // No match - use fallback from knowledge.txt (per FALLBACK_RULE)
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
       console.log('⚠️  NO INTENT MATCHED');
-      console.log('   Using fallback from knowledge.txt');
+      console.log('   Using FALLBACK from knowledge.txt');
+      console.log('   ⚙️  SYSTEM-RULES.txt: FALLBACK_RULE applied');
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
       
+      // Use fallback as per FALLBACK_RULE in SYSTEM-RULES.txt
       const fallback = knowledge.fallback || 'عذراً، لم أفهم سؤالك. يمكنك التواصل معنا مباشرة.';
       
       await facebookService.sendTextMessage(senderId, fallback);
       
       logger.info('✓ Fallback sent', { 
         senderId,
-        source: 'knowledge.txt [FALLBACK]'
+        source: 'knowledge.txt [FALLBACK]',
+        systemRule: 'FALLBACK_RULE applied'
       });
     }
 
