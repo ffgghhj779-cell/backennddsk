@@ -426,32 +426,66 @@ const detectIntent = (message) => {
   
   // Priority 4: Check PRODUCTS keywords
   // Apply PRICING_RULES: Must have product name + size + quantity
+  // Extract core product keywords from each product (ignore modifiers like "سيارات")
   for (const product of knowledge.products) {
     const normalizedProduct = normalizeArabic(product);
     
-    if (normalized.includes(normalizedProduct)) {
-      logger.info('✓ Product matched', { product });
+    // Split product into words and check each core keyword
+    // e.g., "معجون سيارات" => check for "معجون"
+    const productWords = normalizedProduct.split(' ').filter(w => w.length > 2);
+    
+    // Check if any significant product keyword appears in the message
+    let productMatched = false;
+    let matchedKeyword = '';
+    
+    for (const word of productWords) {
+      // Skip common/generic words
+      const skipWords = ['سيارات', 'مباني', 'خشب', 'مواد', 'مساعده', 'للورش'];
+      if (skipWords.some(skip => normalizeArabic(skip) === word)) {
+        continue;
+      }
+      
+      // Check if this product keyword is in the message
+      if (normalized.includes(word)) {
+        productMatched = true;
+        matchedKeyword = word;
+        break;
+      }
+    }
+    
+    if (productMatched) {
+      logger.info('✓ Product matched', { product, keyword: matchedKeyword });
       
       // PRICING_RULES: Check if query has enough details
       const hasSize = normalized.includes('كيلو') || normalized.includes('لتر') || 
                       normalized.includes('جالون') || normalized.includes('كرتونه');
       
       if (!hasSize) {
-        // Prompt for details as per PRICING_RULES
+        // Product mentioned but no size/quantity details
+        // Use the "سعر" intent response from knowledge.txt
+        const priceIntentResponse = knowledge.responses[normalizeArabic('سعر')];
+        
+        if (priceIntentResponse) {
+          logger.info('Using price intent response from knowledge.txt');
+          return {
+            type: 'PRODUCT_INQUIRY_NO_DETAILS',
+            response: priceIntentResponse
+          };
+        }
+        
+        // Fallback if response not found in knowledge.txt
         return {
-          type: 'PRICING_RULE_APPLIED',
-          response: `لو سمحت، عشان نديك السعر الدقيق:\n\n` +
-                   `📝 اسم المنتج: ${product}\n` +
-                   `📏 الحجم: (كيلو، لتر، جالون؟)\n` +
-                   `📦 الكمية المطلوبة: (كام؟)\n\n` +
-                   `للتواصل المباشر:\n📞 قسم الجملة: 01155501111`
+          type: 'PRODUCT_INQUIRY_NO_DETAILS',
+          response: `الأسعار جملة فقط 💼\nمن فضلك قول اسم المنتج + الحجم + الكمية.\n\nللتواصل:\n📞 قسم الجملة: 01155501111`
         };
       }
       
-      // If has details, return full pricing
+      // If has size details, return the full pricing list from knowledge.txt
+      // This gives them actual prices since they specified the product and size
       if (knowledge.pricing) {
+        logger.info('Product with details - returning pricing list');
         return {
-          type: 'PRODUCT_INQUIRY',
+          type: 'PRODUCT_INQUIRY_WITH_DETAILS',
           response: knowledge.pricing
         };
       }
