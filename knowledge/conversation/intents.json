@@ -1,0 +1,149 @@
+{
+  "intents": [
+    {
+      "id": "greeting",
+      "name": "تحية",
+      "priority": "high",
+      "keywords": [
+        "مرحبا", "أهلا", "هاي", "السلام عليكم", "صباح الخير", 
+        "مساء الخير", "hello", "hi", "hey"
+      ],
+      "response_type": "warm_greeting",
+      "should_ask_how_to_help": true
+    },
+    {
+      "id": "farewell",
+      "name": "وداع",
+      "priority": "high",
+      "keywords": [
+        "شكرا", "متشكر", "تسلم", "يعطيك العافية", "ربنا يخليك",
+        "مع السلامة", "باي", "bye", "thanks", "thank you"
+      ],
+      "response_type": "friendly_farewell",
+      "should_offer_more_help": true
+    },
+    {
+      "id": "price_inquiry",
+      "name": "استفسار عن السعر",
+      "priority": "high",
+      "keywords": [
+        "سعر", "أسعار", "بكام", "كام", "تكلفة", "ثمن", "price", "cost"
+      ],
+      "required_info": ["product_name", "size", "quantity"],
+      "response_type": "price_request_details",
+      "routing": "wholesale_department"
+    },
+    {
+      "id": "product_inquiry",
+      "name": "استفسار عن منتج",
+      "priority": "high",
+      "keywords": [
+        "معجون", "فيلر", "برايمر", "ثنر", "سبراي", "دوكو",
+        "دهان", "منتج", "عندكم", "متوفر", "product", "available"
+      ],
+      "response_type": "product_info",
+      "should_include_catalog": true
+    },
+    {
+      "id": "location_inquiry",
+      "name": "استفسار عن الموقع",
+      "priority": "medium",
+      "keywords": [
+        "عنوان", "مكان", "فين", "موقع", "لوكيشن", "location", "address", "where"
+      ],
+      "response_type": "location_details",
+      "should_include_all_branches": true
+    },
+    {
+      "id": "hours_inquiry",
+      "name": "استفسار عن المواعيد",
+      "priority": "medium",
+      "keywords": [
+        "مواعيد", "ساعات", "شغالين", "مفتوح", "متى", "وقت", 
+        "hours", "open", "working", "time"
+      ],
+      "response_type": "working_hours",
+      "should_mention_closed_days": true
+    },
+    {
+      "id": "contact_inquiry",
+      "name": "استفسار عن التواصل",
+      "priority": "medium",
+      "keywords": [
+        "رقم", "تليفون", "هاتف", "واتساب", "واتس", "تواصل", "كلمك",
+        "phone", "contact", "call", "whatsapp"
+      ],
+      "response_type": "contact_info",
+      "should_route_by_purpose": true
+    },
+    {
+      "id": "wholesale_inquiry",
+      "name": "استفسار عن الجملة",
+      "priority": "high",
+      "keywords": [
+        "جملة", "موزع", "تاجر", "بالجملة", "كمية", "كبيرة", 
+        "wholesale", "distributor", "bulk"
+      ],
+      "response_type": "wholesale_info",
+      "confirm_wholesale_policy": true
+    },
+    {
+      "id": "spray_booth_inquiry",
+      "name": "استفسار عن كابينة الرش",
+      "priority": "high",
+      "keywords": [
+        "كابينة", "رش", "دهان سيارات", "spray", "booth", "car paint"
+      ],
+      "response_type": "spray_booth_info",
+      "routing": "spray_booth"
+    },
+    {
+      "id": "delivery_inquiry",
+      "name": "استفسار عن التوصيل",
+      "priority": "medium",
+      "keywords": [
+        "توصيل", "شحن", "ديلفري", "delivery", "shipping"
+      ],
+      "response_type": "delivery_info",
+      "should_confirm_availability": true
+    },
+    {
+      "id": "payment_inquiry",
+      "name": "استفسار عن الدفع",
+      "priority": "medium",
+      "keywords": [
+        "دفع", "طريقة الدفع", "كاش", "فيزا", "payment", "pay", "cash"
+      ],
+      "response_type": "payment_methods"
+    },
+    {
+      "id": "general_info",
+      "name": "معلومات عامة",
+      "priority": "low",
+      "keywords": [
+        "معلومات", "تفاصيل", "عن الشركة", "info", "about", "details"
+      ],
+      "response_type": "company_overview"
+    },
+    {
+      "id": "complaint",
+      "name": "شكوى",
+      "priority": "urgent",
+      "keywords": [
+        "شكوى", "مشكلة", "غلط", "زعلان", "complaint", "problem", "issue"
+      ],
+      "response_type": "empathetic_escalation",
+      "escalate": true
+    }
+  ],
+  "confidence_thresholds": {
+    "high": 0.8,
+    "medium": 0.5,
+    "low": 0.3
+  },
+  "fallback": {
+    "type": "helpful_clarification",
+    "offer_common_topics": true,
+    "suggest_direct_contact": true
+  }
+}
