@@ -1,51 +1,350 @@
 /**
  * Message Service
  * Core business logic for processing messages
+ * 
  * SMART RULE-BASED SYSTEM - NO OpenAI / NO paid APIs
- * Uses structured knowledge file with intent detection and keyword matching
+ * ALL responses come from knowledge.txt ONLY
+ * 
+ * Flow:
+ * 1. Load knowledge.txt on startup
+ * 2. Parse into structured sections
+ * 3. Normalize user input (Arabic text)
+ * 4. Match against intents using keywords
+ * 5. Return response from knowledge file
+ * 6. Fallback if no match
  */
 
+const fs = require('fs');
+const path = require('path');
 const logger = require('../utils/logger');
 const { sanitizeText, isWithinMessagingWindow } = require('../utils/validator');
 const facebookService = require('./facebookService');
-const knowledgeParser = require('./knowledgeParser');
 
-// Load and parse knowledge base on startup
-let knowledgeData = null;
-try {
-  knowledgeData = knowledgeParser.loadKnowledge();
-  if (knowledgeData) {
-    logger.info('✓ Knowledge base loaded and parsed successfully', {
-      smartResponses: knowledgeData.smartResponses.length,
-      intents: Object.keys(knowledgeData.intents).length,
-      products: knowledgeData.products.length
-    });
-  } else {
-    logger.error('✗ Failed to load knowledge base');
+// ============================================================================
+// KNOWLEDGE PARSING AND LOADING
+// ============================================================================
+
+/**
+ * Normalize Arabic text for better matching
+ * Removes diacritics, normalizes letters, removes punctuation
+ * 
+ * @param {string} text - Text to normalize
+ * @returns {string} Normalized text
+ */
+const normalizeArabic = (text) => {
+  if (!text) return '';
+  
+  let normalized = text.toLowerCase().trim();
+  
+  // Remove Arabic diacritics (tashkeel)
+  normalized = normalized.replace(/[\u064B-\u065F\u0670]/g, '');
+  
+  // Normalize Alef variations: أ إ آ => ا
+  normalized = normalized.replace(/[أإآ]/g, 'ا');
+  
+  // Normalize Taa Marbuta: ة => ه
+  normalized = normalized.replace(/ة/g, 'ه');
+  
+  // Normalize Yaa: ى => ي
+  normalized = normalized.replace(/ى/g, 'ي');
+  
+  // Remove punctuation and special characters
+  normalized = normalized.replace(/[.,!?؟،٪\-_\(\)\[\]{}'"<>]/g, ' ');
+  
+  // Normalize multiple spaces to single space
+  normalized = normalized.replace(/\s+/g, ' ').trim();
+  
+  return normalized;
+};
+
+/**
+ * Parse knowledge.txt into structured object
+ * 
+ * @param {string} content - Raw knowledge file content
+ * @returns {object} Parsed knowledge structure
+ */
+const parseKnowledge = (content) => {
+  const knowledge = {
+    intro: '',
+    businessRules: '',
+    workingHours: '',
+    locations: '',
+    contacts: '',
+    intents: {},      // keyword => intent_name mapping
+    responses: {},    // intent_name => response text
+    products: [],
+    pricing: '',
+    fallback: '',
+    smartResponses: [] // {keywords: [], response: ''}
+  };
+
+  if (!content) return knowledge;
+
+  // Split by sections [SECTION_NAME]
+  const sections = content.split(/\[([A-Z_]+)\]/);
+  
+  for (let i = 1; i < sections.length; i += 2) {
+    const sectionName = sections[i];
+    const sectionContent = sections[i + 1] ? sections[i + 1].trim() : '';
+    
+    switch (sectionName) {
+      case 'INTRO':
+        knowledge.intro = sectionContent;
+        break;
+        
+      case 'BUSINESS_RULES':
+        knowledge.businessRules = sectionContent;
+        break;
+        
+      case 'WORKING_HOURS':
+        knowledge.workingHours = sectionContent;
+        break;
+        
+      case 'LOCATIONS':
+        knowledge.locations = sectionContent;
+        break;
+        
+      case 'CONTACTS':
+        knowledge.contacts = sectionContent;
+        break;
+        
+      case 'INTENTS':
+        // Parse intent keywords: "keyword1 – keyword2 – keyword3"
+        const intentLines = sectionContent.split('\n').filter(l => l.trim());
+        intentLines.forEach((line, index) => {
+          const keywords = line.split('–').map(k => k.trim()).filter(k => k);
+          if (keywords.length > 0) {
+            const intentName = `intent_${index + 1}`;
+            // Map each keyword to this intent
+            keywords.forEach(keyword => {
+              knowledge.intents[normalizeArabic(keyword)] = intentName;
+            });
+          }
+        });
+        break;
+        
+      case 'RESPONSES':
+        // Parse INTENT: keyword\nresponse format
+        const responseBlocks = sectionContent.split(/INTENT:\s*/);
+        responseBlocks.forEach(block => {
+          if (!block.trim()) return;
+          
+          const lines = block.split('\n');
+          const intentKeyword = lines[0].trim();
+          const responseText = lines.slice(1).join('\n').trim();
+          
+          if (intentKeyword && responseText) {
+            // Store response by normalized keyword
+            knowledge.responses[normalizeArabic(intentKeyword)] = responseText;
+          }
+        });
+        break;
+        
+      case 'PRODUCTS':
+        knowledge.products = sectionContent
+          .split('\n')
+          .filter(line => line.trim().startsWith('-'))
+          .map(line => line.replace(/^-\s*/, '').trim());
+        break;
+        
+      case 'PRICING':
+        knowledge.pricing = sectionContent;
+        break;
+        
+      case 'FALLBACK':
+        knowledge.fallback = sectionContent;
+        break;
+        
+      case 'SMART_RESPONSES':
+        // Parse KEYWORDS: keyword1، keyword2، keyword3\nresponse lines...
+        const smartBlocks = sectionContent.split(/KEYWORDS:\s*/);
+        smartBlocks.forEach(block => {
+          if (!block.trim()) return;
+          
+          const lines = block.split('\n');
+          const keywordLine = lines[0].trim();
+          
+          // Split by comma or Arabic comma
+          const keywords = keywordLine.split(/[،,]/).map(k => k.trim()).filter(k => k);
+          
+          // Collect response lines (skip first line which is keywords)
+          let response = '';
+          for (let i = 1; i < lines.length; i++) {
+            const line = lines[i].trim();
+            // Stop at next KEYWORDS or if we hit an empty section
+            if (line && !line.startsWith('KEYWORDS:')) {
+              response += line + '\n';
+            } else if (!line && response) {
+              // Empty line after collecting response means end of block
+              break;
+            }
+          }
+          
+          if (keywords.length > 0 && response) {
+            knowledge.smartResponses.push({
+              keywords: keywords.map(k => normalizeArabic(k)),
+              response: response.trim()
+            });
+          }
+        });
+        break;
+    }
   }
-} catch (error) {
-  logger.error('Error loading knowledge base:', error);
-}
+  
+  logger.info('Knowledge parsed', {
+    intents: Object.keys(knowledge.intents).length,
+    responses: Object.keys(knowledge.responses).length,
+    products: knowledge.products.length,
+    smartResponses: knowledge.smartResponses.length
+  });
+  
+  return knowledge;
+};
 
 /**
- * REMOVED: Old knowledge search function
- * Replaced with smart rule-based intent detection system
+ * Load knowledge.txt file and parse it
+ * 
+ * @returns {object|null} Parsed knowledge or null if failed
  */
+const loadKnowledge = () => {
+  try {
+    const knowledgePath = path.join(process.cwd(), 'knowledge.txt');
+    
+    if (!fs.existsSync(knowledgePath)) {
+      logger.error('knowledge.txt file not found');
+      return null;
+    }
+    
+    const content = fs.readFileSync(knowledgePath, 'utf8');
+    const parsed = parseKnowledge(content);
+    
+    logger.info('✓ Knowledge loaded successfully');
+    return parsed;
+    
+  } catch (error) {
+    logger.error('Error loading knowledge:', error);
+    return null;
+  }
+};
+
+// Load knowledge on startup
+let knowledge = loadKnowledge();
+
+// ============================================================================
+// INTENT DETECTION AND RESPONSE LOGIC
+// ============================================================================
 
 /**
- * REMOVED: Old hardcoded FAQ rules
- * All responses now come from knowledge.txt file
- * No hardcoded responses in the code
+ * Detect intent from user message using keyword matching
+ * Priority order:
+ * 1. SMART_RESPONSES (if available)
+ * 2. INTENTS => RESPONSES mapping
+ * 3. PRODUCTS keywords
+ * 4. FALLBACK
+ * 
+ * @param {string} message - User message
+ * @returns {object|null} {type, response} or null
  */
+const detectIntent = (message) => {
+  if (!message || !knowledge) return null;
+  
+  const normalized = normalizeArabic(message);
+  logger.info('Detecting intent', { original: message, normalized });
+  
+  // Priority 1: Check SMART_RESPONSES
+  for (const smartResponse of knowledge.smartResponses) {
+    for (const keyword of smartResponse.keywords) {
+      if (normalized.includes(keyword)) {
+        logger.info('✓ Smart response matched', { keyword });
+        return {
+          type: 'SMART_RESPONSE',
+          response: smartResponse.response
+        };
+      }
+    }
+  }
+  
+  // Priority 2: Check INTENTS and map to RESPONSES
+  for (const [keyword, intentName] of Object.entries(knowledge.intents)) {
+    if (normalized.includes(keyword)) {
+      // Find response for this keyword (not intent name)
+      const response = knowledge.responses[keyword];
+      
+      if (response) {
+        logger.info('✓ Intent matched', { keyword, intentName });
+        return {
+          type: 'INTENT_RESPONSE',
+          response: response
+        };
+      }
+    }
+  }
+  
+  // Priority 3: Check PRODUCTS keywords
+  for (const product of knowledge.products) {
+    const normalizedProduct = normalizeArabic(product);
+    
+    if (normalized.includes(normalizedProduct)) {
+      logger.info('✓ Product matched', { product });
+      
+      // Return pricing info
+      if (knowledge.pricing) {
+        return {
+          type: 'PRODUCT_INQUIRY',
+          response: knowledge.pricing
+        };
+      }
+    }
+  }
+  
+  // Priority 4: Check for working hours keywords
+  const hoursKeywords = ['مواعيد', 'شغالين', 'مفتوح', 'وقت', 'ساعات'];
+  for (const keyword of hoursKeywords) {
+    if (normalized.includes(normalizeArabic(keyword))) {
+      logger.info('✓ Working hours query');
+      return {
+        type: 'WORKING_HOURS',
+        response: knowledge.workingHours || 'شغالين يوميًا من 8 صباحًا لـ 6 مساءً ⏰\nالجمعة إجازة.'
+      };
+    }
+  }
+  
+  // Priority 5: Check for location keywords
+  const locationKeywords = ['عنوان', 'مكان', 'فين', 'لوكيشن', 'موقع'];
+  for (const keyword of locationKeywords) {
+    if (normalized.includes(normalizeArabic(keyword))) {
+      logger.info('✓ Location query');
+      return {
+        type: 'LOCATION',
+        response: knowledge.locations || '📍 محطة أبو رجيلة – مؤسسة الزكاة'
+      };
+    }
+  }
+  
+  // Priority 6: Check for contact/WhatsApp keywords
+  const contactKeywords = ['رقم', 'تليفون', 'هاتف', 'واتساب', 'واتس', 'تواصل', 'كلمك'];
+  for (const keyword of contactKeywords) {
+    if (normalized.includes(normalizeArabic(keyword))) {
+      logger.info('✓ Contact query');
+      return {
+        type: 'CONTACT',
+        response: knowledge.contacts || 'للتواصل:\n📞 قسم الجملة: 01155501111\n📞 كابينة الرش: 01017782299'
+      };
+    }
+  }
+  
+  // No match found
+  logger.info('✗ No intent matched');
+  return null;
+};
+
+// ============================================================================
+// MESSAGE PROCESSING
+// ============================================================================
 
 /**
  * Processes an incoming text message
- * SMART RULE-BASED SYSTEM - NO OpenAI / NO paid APIs
- * 
- * Flow:
- * 1. Detect intent using keyword matching from knowledge.txt
- * 2. Return mapped response from knowledge.txt
- * 3. If no match, return fallback from knowledge.txt
+ * Uses ONLY knowledge.txt for all responses
  * 
  * @param {string} senderId - User's Facebook ID (PSID)
  * @param {string} messageText - Message content
@@ -57,8 +356,6 @@ const processTextMessage = async (senderId, messageText, timestamp) => {
     // Validate messaging window
     if (!isWithinMessagingWindow(timestamp)) {
       logger.warn('Message outside 24-hour window', { senderId, timestamp });
-      // In production, you might want to handle this differently
-      // For now, we'll still respond but log the warning
     }
 
     // Sanitize input
@@ -75,7 +372,7 @@ const processTextMessage = async (senderId, messageText, timestamp) => {
     });
 
     // Check if knowledge base is loaded
-    if (!knowledgeData) {
+    if (!knowledge) {
       logger.error('Knowledge base not loaded');
       await facebookService.sendTextMessage(
         senderId,
@@ -90,57 +387,44 @@ const processTextMessage = async (senderId, messageText, timestamp) => {
       facebookService.sendTypingIndicator(senderId, true)
     ]);
 
-    // ===================================================
-    // SMART INTENT DETECTION - Rule-based matching
-    // ===================================================
-    
+    // Detect intent and get response
     console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     console.log('🤖 SMART RULE-BASED SYSTEM');
     console.log(`📨 User query: "${sanitizedText}"`);
-    console.log('🔍 Detecting intent...');
+    console.log('🔍 Detecting intent from knowledge.txt...');
     
-    // Detect intent using smart keyword matching
-    const detectedIntent = knowledgeParser.detectIntent(sanitizedText, knowledgeData);
+    const result = detectIntent(sanitizedText);
     
-    if (detectedIntent) {
-      // Intent matched - send response from knowledge.txt
+    if (result) {
+      // Intent matched - send response
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
       console.log('✅ INTENT MATCHED');
-      console.log(`   Type: ${detectedIntent.type}`);
-      console.log(`   Intent: ${detectedIntent.intent}`);
-      console.log(`   Keyword: ${detectedIntent.matchedKeyword || 'N/A'}`);
-      console.log(`   Confidence: ${detectedIntent.confidence}`);
+      console.log(`   Type: ${result.type}`);
       console.log('   Source: knowledge.txt');
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
       
-      // Send the response from knowledge file
-      await facebookService.sendTextMessage(senderId, detectedIntent.response);
+      await facebookService.sendTextMessage(senderId, result.response);
       
-      logger.info('✓ Sent intent-based response', { 
+      logger.info('✓ Response sent', { 
         senderId,
-        source: 'KNOWLEDGE_FILE',
-        intentType: detectedIntent.type,
-        intent: detectedIntent.intent,
-        confidence: detectedIntent.confidence
+        source: 'knowledge.txt',
+        type: result.type
       });
       
     } else {
-      // No intent matched - use fallback from knowledge.txt
+      // No match - use fallback from knowledge.txt
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
       console.log('⚠️  NO INTENT MATCHED');
-      console.log('   Using fallback response from knowledge.txt');
-      console.log('   Source: knowledge.txt [FALLBACK]');
+      console.log('   Using fallback from knowledge.txt');
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
       
-      // Get fallback response from knowledge file
-      const fallbackResponse = knowledgeParser.getFallbackResponse(knowledgeData);
+      const fallback = knowledge.fallback || 'عذراً، لم أفهم سؤالك. يمكنك التواصل معنا مباشرة.';
       
-      await facebookService.sendTextMessage(senderId, fallbackResponse);
+      await facebookService.sendTextMessage(senderId, fallback);
       
-      logger.info('✓ Sent fallback response', { 
+      logger.info('✓ Fallback sent', { 
         senderId,
-        source: 'KNOWLEDGE_FILE_FALLBACK',
-        query: sanitizedText
+        source: 'knowledge.txt [FALLBACK]'
       });
     }
 
