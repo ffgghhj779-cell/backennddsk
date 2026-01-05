@@ -1,0 +1,28 @@
+{
+  "name": "مجموعة العدوي للدهانات",
+  "name_en": "Al-Adawy Paints Group",
+  "type": "wholesale_distributor",
+  "description": "مستودع توزيع ووكالات دهانات معتمد",
+  "description_en": "Authorized paint distribution warehouse and agencies",
+  "business_model": "wholesale_only",
+  "established": "2020",
+  "specialization": [
+    "دهانات سيارات",
+    "دهانات مباني (قريباً)",
+    "دهانات خشب (قريباً)",
+    "كيماويات (قريباً)"
+  ],
+  "target_customers": [
+    "محلات دهانات",
+    "موزعين",
+    "ورش سيارات",
+    "مقاولين"
+  ],
+  "unique_selling_points": [
+    "أسعار جملة تنافسية",
+    "منتجات عالية الجودة",
+    "توصيل سريع",
+    "خدمة عملاء ممتازة",
+    "كابينة رش سيارات احترافية"
+  ]
+}

@@ -24,9 +24,10 @@ const server = app.listen(config.server.port, '0.0.0.0', () => {
     appSecret: config.facebook.appSecret ? '✓ Set' : '✗ Not set'
   });
 
-  logger.info('🤖 Bot Mode: KNOWLEDGE-ONLY (AI/OpenAI DISABLED)', {
-    knowledgeFile: 'knowledge.txt',
-    aiEnabled: false
+  logger.info('🤖 Bot Configuration:', {
+    aiEnabled: config.openai.apiKey ? true : false,
+    mode: config.openai.apiKey ? 'AI + Structured Knowledge' : 'Structured Knowledge Only',
+    knowledgeSystem: 'JSON-based organized files'
   });
 
   const publicUrl = process.env.REPLIT_DEV_DOMAIN ? `https://${process.env.REPLIT_DEV_DOMAIN}` : `http://localhost:${config.server.port}`;

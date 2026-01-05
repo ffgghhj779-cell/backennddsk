@@ -1,0 +1,189 @@
+{
+  "disclaimer": "جميع الأسعار بالجملة وبالجنيه المصري. الأسعار قابلة للتغيير حسب الكمية.",
+  "tax_info": {
+    "tax_rate": 0.14,
+    "note": "الأسعار متوفرة مع وبدون ضريبة"
+  },
+  "products": {
+    "putty": {
+      "category": "معجون",
+      "items": [
+        {
+          "name": "NUMIX 2.8 كجم",
+          "size": "2.8 kg",
+          "price_without_tax": 286.28,
+          "price_with_tax": 326.36,
+          "carton_price": 1305.44,
+          "currency": "EGP"
+        },
+        {
+          "name": "Top Plus 2.8 كجم",
+          "size": "2.8 kg",
+          "price_without_tax": 280.01,
+          "price_with_tax": 319.21,
+          "carton_price": 1915.27,
+          "currency": "EGP"
+        },
+        {
+          "name": "Grey Top Plus 1 كجم",
+          "size": "1 kg",
+          "price_without_tax": 116.51,
+          "price_with_tax": 132.82,
+          "carton_price": 796.93,
+          "currency": "EGP"
+        },
+        {
+          "name": "Grey Top Plus نصف كجم",
+          "size": "0.5 kg",
+          "price_without_tax": 70.0,
+          "price_with_tax": 79.8,
+          "carton_price": 957.6,
+          "currency": "EGP"
+        },
+        {
+          "name": "NC Duco جالون 5 كجم",
+          "size": "5 kg",
+          "price_without_tax": 413.05,
+          "price_with_tax": 470.88,
+          "carton_price": 1883.51,
+          "currency": "EGP"
+        },
+        {
+          "name": "NC Duco 1 كجم",
+          "size": "1 kg",
+          "price_without_tax": 87.86,
+          "price_with_tax": 100.16,
+          "carton_price": 600.96,
+          "currency": "EGP"
+        },
+        {
+          "name": "دوكو أردني أبيض/رمادي 5 كجم",
+          "size": "5 kg",
+          "color": ["أبيض", "رمادي"],
+          "price_without_tax": 568.56,
+          "price_with_tax": 648.16,
+          "carton_price": 2592.63,
+          "currency": "EGP"
+        },
+        {
+          "name": "أردني خشن 1 كجم",
+          "size": "1 kg",
+          "price_without_tax": 125.94,
+          "price_with_tax": 143.57,
+          "carton_price": 861.43,
+          "currency": "EGP"
+        },
+        {
+          "name": "فيبر جلاس ناعم أردني 1 كجم",
+          "size": "1 kg",
+          "price_without_tax": 133.46,
+          "price_with_tax": 152.14,
+          "carton_price": 912.87,
+          "currency": "EGP"
+        }
+      ]
+    },
+    "filler_primer": {
+      "category": "الفيلر والبرايمر",
+      "items": [
+        {
+          "name": "Top Plus K2 بطئ 1 لتر",
+          "size": "1 L",
+          "type": "slow",
+          "price_without_tax": 152.7,
+          "price_with_tax": 174.08,
+          "currency": "EGP"
+        },
+        {
+          "name": "Top Plus K1 سريع 1 لتر",
+          "size": "1 L",
+          "type": "fast",
+          "price_without_tax": 179.58,
+          "price_with_tax": 204.72,
+          "currency": "EGP"
+        },
+        {
+          "name": "مصلب 250 مل",
+          "size": "250 ml",
+          "price_without_tax": 70.59,
+          "price_with_tax": 80.47,
+          "currency": "EGP"
+        },
+        {
+          "name": "NCR K1 أبيض/رمادي جالون",
+          "size": "gallon",
+          "color": ["أبيض", "رمادي"],
+          "price_without_tax": 390.0,
+          "price_with_tax": 444.6,
+          "currency": "EGP"
+        }
+      ]
+    },
+    "thinner": {
+      "category": "الثنر",
+      "items": [
+        {
+          "name": "NUMIX 121 - 1 لتر",
+          "size": "1 L",
+          "type": "121",
+          "price_without_tax": 100.0,
+          "price_with_tax": 114.0,
+          "currency": "EGP"
+        },
+        {
+          "name": "NUMIX 121 - 3 لتر",
+          "size": "3 L",
+          "type": "121",
+          "price_without_tax": 256.0,
+          "price_with_tax": 291.84,
+          "currency": "EGP"
+        },
+        {
+          "name": "NUMIX 121 - 5 لتر",
+          "size": "5 L",
+          "type": "121",
+          "price_without_tax": 396.0,
+          "price_with_tax": 451.44,
+          "currency": "EGP"
+        },
+        {
+          "name": "فرن سريع 202 - 1 لتر",
+          "size": "1 L",
+          "type": "202",
+          "speed": "fast",
+          "price_without_tax": 118.77,
+          "price_with_tax": 135.4,
+          "currency": "EGP"
+        },
+        {
+          "name": "فرن بطئ 204 - 1 لتر",
+          "size": "1 L",
+          "type": "204",
+          "speed": "slow",
+          "price_without_tax": 116.29,
+          "price_with_tax": 132.57,
+          "currency": "EGP"
+        }
+      ]
+    },
+    "spray": {
+      "category": "السبراي",
+      "items": [
+        {
+          "name": "جميع أنواع السبراي",
+          "size": "250 g",
+          "price_without_tax": 45.0,
+          "price_with_tax": 51.3,
+          "carton_price": 615.6,
+          "currency": "EGP",
+          "note": "جميع الألوان متوفرة"
+        }
+      ]
+    }
+  },
+  "notes": [
+    "الأسعار تختلف حسب الكمية المطلوبة",
+    "للحصول على عرض سعر دقيق، يرجى تحديد: اسم المنتج + الحجم + الكمية",
+    "التواصل مع قسم الجملة: 01155501111"
+  ]
+}

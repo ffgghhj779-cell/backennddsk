@@ -1,0 +1,92 @@
+{
+  "categories": [
+    {
+      "id": "car_paints",
+      "name": "دهانات سيارات",
+      "name_en": "Car Paints",
+      "status": "available",
+      "subcategories": [
+        {
+          "id": "putty",
+          "name": "معجون",
+          "name_en": "Putty",
+          "description": "معجون لتسوية وإصلاح سطح السيارة قبل الدهان",
+          "brands": ["NUMIX", "Top Plus", "NC Duco", "أردني"],
+          "available_sizes": ["نصف كجم", "1 كجم", "2.8 كجم", "5 كجم"]
+        },
+        {
+          "id": "filler",
+          "name": "فيلر",
+          "name_en": "Filler",
+          "description": "طبقة تحضيرية قبل الدهان النهائي",
+          "brands": ["Top Plus"],
+          "types": ["K1 سريع", "K2 بطئ"],
+          "available_sizes": ["1 لتر", "جالون"]
+        },
+        {
+          "id": "primer",
+          "name": "برايمر",
+          "name_en": "Primer",
+          "description": "طبقة أساس لحماية وتحضير السطح",
+          "brands": ["NCR"],
+          "colors": ["أبيض", "رمادي"],
+          "available_sizes": ["جالون"]
+        },
+        {
+          "id": "thinner",
+          "name": "ثنر",
+          "name_en": "Thinner",
+          "description": "مذيب لتخفيف الدهانات",
+          "brands": ["NUMIX"],
+          "types": ["121 عادي", "202 سريع", "204 بطئ"],
+          "available_sizes": ["1 لتر", "3 لتر", "5 لتر"]
+        },
+        {
+          "id": "spray",
+          "name": "سبراي",
+          "name_en": "Spray Paint",
+          "description": "دهان سبراي جاهز للاستخدام",
+          "available_sizes": ["250 جرام"],
+          "colors": "جميع الألوان متوفرة"
+        },
+        {
+          "id": "duco",
+          "name": "دوكو",
+          "name_en": "Duco",
+          "description": "دهان نهائي للسيارات",
+          "brands": ["NC Duco", "أردني"],
+          "available_sizes": ["1 كجم", "5 كجم"]
+        },
+        {
+          "id": "accessories",
+          "name": "مواد مساعدة للورش",
+          "name_en": "Workshop Accessories",
+          "description": "أدوات ومواد مساعدة لورش الدهان",
+          "items": ["مصلب", "فيبر جلاس"]
+        }
+      ]
+    },
+    {
+      "id": "building_paints",
+      "name": "دهانات مباني",
+      "name_en": "Building Paints",
+      "status": "coming_soon",
+      "expected": "قريباً"
+    },
+    {
+      "id": "wood_paints",
+      "name": "دهانات خشب",
+      "name_en": "Wood Paints",
+      "status": "coming_soon",
+      "expected": "قريباً"
+    },
+    {
+      "id": "chemicals",
+      "name": "كيماويات",
+      "name_en": "Chemicals",
+      "status": "coming_soon",
+      "expected": "قريباً"
+    }
+  ],
+  "product_info_note": "جميع المنتجات متوفرة بالجملة فقط. للاستفسار عن الأسعار، يرجى تحديد اسم المنتج والحجم والكمية المطلوبة."
+}

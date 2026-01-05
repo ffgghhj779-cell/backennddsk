@@ -1,0 +1,34 @@
+{
+  "sales_policy": {
+    "type": "wholesale_only",
+    "description": "البيع جملة فقط - لا يوجد بيع قطاعي للأفراد",
+    "minimum_order": "حسب المنتج",
+    "payment_methods": ["نقدي", "تحويل بنكي"],
+    "delivery_available": true
+  },
+  "pricing_policy": {
+    "currency": "EGP",
+    "tax_included_option": true,
+    "tax_rate": 0.14,
+    "price_variations": "تختلف الأسعار حسب الكمية",
+    "price_inquiry_requirements": {
+      "required_info": ["اسم المنتج", "الحجم", "الكمية"],
+      "description": "لا يتم إعطاء سعر بدون تحديد المنتج والحجم والكمية بشكل دقيق"
+    }
+  },
+  "customer_service_policy": {
+    "response_time": "فوري خلال ساعات العمل",
+    "language": "العربية",
+    "tone": "محترف وودود",
+    "routing": {
+      "wholesale_inquiries": "قسم الجملة - 01155501111",
+      "spray_booth": "كابينة الرش - 01017782299",
+      "general_inquiries": "خدمة العملاء - 01124400797"
+    }
+  },
+  "restrictions": {
+    "no_retail": "لا يوجد بيع للأفراد",
+    "wholesale_only": "التعامل مع المحلات والموزعين فقط",
+    "no_online_prices": "الأسعار تُذكر عند التواصل المباشر مع التفاصيل الكاملة"
+  }
+}
