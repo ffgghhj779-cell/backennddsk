@@ -110,13 +110,36 @@ ${personality.emotional_intelligence.detect_sentiment ? 'اكتشف مشاعر �
   }
 
   /**
-   * Detect intent from user message using keyword matching
+   * Normalize Arabic text for better matching
+   */
+  normalizeArabic(text) {
+    if (!text) return '';
+    
+    let normalized = text.toLowerCase().trim();
+    
+    // Remove Arabic diacritics
+    normalized = normalized.replace(/[\u064B-\u065F\u0670]/g, '');
+    
+    // Normalize Alef variations
+    normalized = normalized.replace(/[أإآ]/g, 'ا');
+    
+    // Normalize Taa Marbuta
+    normalized = normalized.replace(/ة/g, 'ه');
+    
+    // Normalize Yaa
+    normalized = normalized.replace(/ى/g, 'ي');
+    
+    return normalized;
+  }
+
+  /**
+   * Detect intent from user message using keyword matching - IMPROVED
    */
   detectIntent(message) {
     const intentsData = knowledgeManager.getIntents();
     if (!intentsData) return null;
 
-    const normalizedMessage = message.toLowerCase().trim();
+    const normalizedMessage = this.normalizeArabic(message);
     const detectedIntents = [];
 
     // Check each intent
@@ -124,9 +147,10 @@ ${personality.emotional_intelligence.detect_sentiment ? 'اكتشف مشاعر �
       let matchScore = 0;
       const matchedKeywords = [];
 
-      // Check keywords
+      // Check keywords with normalized Arabic
       for (const keyword of intent.keywords) {
-        if (normalizedMessage.includes(keyword.toLowerCase())) {
+        const normalizedKeyword = this.normalizeArabic(keyword);
+        if (normalizedMessage.includes(normalizedKeyword)) {
           matchScore += 1;
           matchedKeywords.push(keyword);
         }
@@ -288,7 +312,7 @@ ${personality.emotional_intelligence.detect_sentiment ? 'اكتشف مشاعر �
   }
 
   /**
-   * Generate response using only structured knowledge (fallback)
+   * Generate response using only structured knowledge (fallback) - IMPROVED
    */
   generateKnowledgeOnlyResponse(enrichedContext) {
     const templates = knowledgeManager.getResponseTemplates();
@@ -302,6 +326,7 @@ ${personality.emotional_intelligence.detect_sentiment ? 'اكتشف مشاعر �
     }
 
     const intent = enrichedContext.intent?.intent;
+    const userMessage = enrichedContext.userMessage?.toLowerCase() || '';
     let response = null;
 
     // Get appropriate response based on intent
@@ -317,7 +342,22 @@ ${personality.emotional_intelligence.detect_sentiment ? 'اكتشف مشاعر �
         break;
 
       case 'price_inquiry':
-        response = templates.response_templates.price_inquiry_without_details.message;
+        // Check if they mentioned a specific product
+        if (this.normalizeArabic(userMessage).includes('معجون') || 
+            this.normalizeArabic(userMessage).includes('putty')) {
+          response = this.getProductSpecificResponse('معجون', enrichedContext);
+        } else if (this.normalizeArabic(userMessage).includes('فيلر') || 
+                   this.normalizeArabic(userMessage).includes('filler')) {
+          response = this.getProductSpecificResponse('فيلر', enrichedContext);
+        } else if (this.normalizeArabic(userMessage).includes('ثنر') || 
+                   this.normalizeArabic(userMessage).includes('thinner')) {
+          response = this.getProductSpecificResponse('ثنر', enrichedContext);
+        } else if (this.normalizeArabic(userMessage).includes('سبراي') || 
+                   this.normalizeArabic(userMessage).includes('spray')) {
+          response = this.getProductSpecificResponse('سبراي', enrichedContext);
+        } else {
+          response = templates.response_templates.price_inquiry_without_details.message;
+        }
         break;
 
       case 'wholesale_inquiry':
@@ -341,7 +381,23 @@ ${personality.emotional_intelligence.detect_sentiment ? 'اكتشف مشاعر �
         break;
 
       case 'product_inquiry':
-        response = templates.response_templates.product_categories.message;
+        // Check if asking about specific product
+        const normalizedMsg = this.normalizeArabic(userMessage);
+        if (normalizedMsg.includes('معجون')) {
+          response = this.getProductSpecificResponse('معجون', enrichedContext);
+        } else if (normalizedMsg.includes('فيلر')) {
+          response = this.getProductSpecificResponse('فيلر', enrichedContext);
+        } else if (normalizedMsg.includes('برايمر')) {
+          response = this.getProductSpecificResponse('برايمر', enrichedContext);
+        } else if (normalizedMsg.includes('ثنر')) {
+          response = this.getProductSpecificResponse('ثنر', enrichedContext);
+        } else if (normalizedMsg.includes('سبراي')) {
+          response = this.getProductSpecificResponse('سبراي', enrichedContext);
+        } else if (normalizedMsg.includes('دوكو')) {
+          response = this.getProductSpecificResponse('دوكو', enrichedContext);
+        } else {
+          response = templates.response_templates.product_categories.message;
+        }
         break;
 
       default:
@@ -354,6 +410,52 @@ ${personality.emotional_intelligence.detect_sentiment ? 'اكتشف مشاعر �
       intent: intent,
       confidence: enrichedContext.intent?.confidence || 0
     };
+  }
+
+  /**
+   * Get product-specific response with details and pricing
+   */
+  getProductSpecificResponse(productName, enrichedContext) {
+    const pricing = knowledgeManager.getPricing();
+    const catalog = knowledgeManager.getProductCatalog();
+    
+    if (!pricing || !catalog) {
+      return `معلومات ${productName} غير متوفرة حالياً.\n\n📞 للاستفسار:\nقسم الجملة: 01155501111`;
+    }
+
+    // Find product in catalog
+    let productInfo = null;
+    for (const category of catalog.categories) {
+      if (category.subcategories) {
+        for (const sub of category.subcategories) {
+          if (this.normalizeArabic(sub.name).includes(this.normalizeArabic(productName))) {
+            productInfo = sub;
+            break;
+          }
+        }
+      }
+      if (productInfo) break;
+    }
+
+    // Build response
+    let response = `📦 ${productName}\n\n`;
+    
+    if (productInfo) {
+      response += `${productInfo.description}\n\n`;
+      if (productInfo.brands && productInfo.brands.length > 0) {
+        response += `🏷️ الماركات المتوفرة:\n${productInfo.brands.map(b => `• ${b}`).join('\n')}\n\n`;
+      }
+      if (productInfo.available_sizes && productInfo.available_sizes.length > 0) {
+        response += `📏 الأحجام المتوفرة:\n${productInfo.available_sizes.map(s => `• ${s}`).join('\n')}\n\n`;
+      }
+    }
+
+    // Add sample pricing
+    response += `💰 للأسعار:\nمحتاج أعرف الماركة + الحجم + الكمية بالظبط\n\n`;
+    response += `مثال: "محتاج معجون Top Plus 2.8 كجم، كرتونة"\n\n`;
+    response += `📞 قسم الجملة: 01155501111\n📱 واتساب: 201155501111`;
+
+    return response;
   }
 
   /**
