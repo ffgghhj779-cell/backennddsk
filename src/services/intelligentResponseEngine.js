@@ -306,8 +306,20 @@ ${personality.emotional_intelligence.detect_sentiment ? 'اكتشف مشاعر �
     } catch (error) {
       logger.error('Error generating AI response:', error);
       
-      // Fallback to knowledge-only response
-      return this.generateKnowledgeOnlyResponse(enrichedContext);
+      // Fallback to knowledge-only response with helpful routing
+      const fallbackResponse = this.generateKnowledgeOnlyResponse(enrichedContext);
+      
+      // If still unknown, ensure we have helpful routing
+      if (!fallbackResponse || fallbackResponse.intent === null) {
+        return {
+          response: 'حابب أساعدك أكتر! 👍\n\nللاستفسار التفصيلي أو الأسعار الدقيقة، كلمنا مباشرة:\n\n📞 قسم الجملة: 01155501111\n📱 واتساب: 201155501111\n📞 خدمة العملاء: 01124400797\n\nأو لو عايز تسأل عن:\n💰 الأسعار | 📦 المنتجات | 📍 المواقع\n⏰ مواعيد العمل | 🚗 كابينة الرش\n\nأنا هنا عشان أساعدك! 😊',
+          source: 'helpful_fallback',
+          intent: 'routing_assistance',
+          confidence: 0.5
+        };
+      }
+      
+      return fallbackResponse;
     }
   }
 
@@ -318,8 +330,8 @@ ${personality.emotional_intelligence.detect_sentiment ? 'اكتشف مشاعر �
     const templates = knowledgeManager.getResponseTemplates();
     if (!templates) {
       return {
-        response: 'عذراً، النظام غير متاح حالياً. يرجى المحاولة لاحقاً أو التواصل معنا على: 01155501111',
-        source: 'fallback',
+        response: 'حابب أساعدك! 👍\n\nللاستفسار المباشر:\n📞 قسم الجملة: 01155501111\n📱 واتساب: 201155501111\n📞 خدمة العملاء: 01124400797',
+        source: 'system_fallback',
         intent: null,
         confidence: 0
       };
@@ -678,10 +690,10 @@ ${personality.emotional_intelligence.detect_sentiment ? 'اكتشف مشاعر �
 
     if (matches.length === 0) {
       return {
-        response: `للأسف، مقدرتش ألاقي سعر ${productName} ${brand || ''} ${sizeInfo ? sizeInfo + ' كجم/لتر' : ''}.\n\n📞 للاستفسار الدقيق:\nقسم الجملة: 01155501111\nواتساب: 201155501111\n\nممكن تجرب تكتب بوضوح أكتر مثلاً:\n"NUMIX 2.8 كجم"`,
-        source: 'price_not_found',
-        intent: 'price_lookup',
-        confidence: 0.3
+        response: `حابب أساعدك في معرفة سعر ${productName}! 👍\n\nللحصول على السعر الدقيق لـ ${brand || 'الماركة المطلوبة'} ${sizeInfo ? sizeInfo + ' كجم/لتر' : ''}:\n\n📞 قسم الجملة: 01155501111\n📱 واتساب: 201155501111\n\nفريقنا هيساعدك ويديك السعر بالتفصيل! 😊`,
+        source: 'price_routing',
+        intent: 'price_lookup_routing',
+        confidence: 0.8
       };
     }
 
@@ -828,12 +840,12 @@ ${personality.emotional_intelligence.detect_sentiment ? 'اكتشف مشاعر �
     } catch (error) {
       logger.error('Error in intelligent response engine:', error);
       
-      // Ultimate fallback
+      // Ultimate fallback - always helpful and professional
       return {
-        response: 'عذراً، حدث خطأ فني. يرجى المحاولة مرة أخرى أو التواصل معنا على: 01155501111',
-        source: 'error',
-        intent: null,
-        confidence: 0,
+        response: 'حابب أساعدك! 👍\n\nللتواصل المباشر:\n\n📞 قسم الجملة: 01155501111\n📱 واتساب: 201155501111\n📞 خدمة العملاء: 01124400797\n\nنحن في خدمتك دائماً! 😊',
+        source: 'error_recovery',
+        intent: 'routing_assistance',
+        confidence: 0.5,
         error: error.message
       };
     }
