@@ -133,6 +133,234 @@ ${personality.emotional_intelligence.detect_sentiment ? 'اكتشف مشاعر �
   }
 
   /**
+   * Enhanced product name extraction with context awareness
+   */
+  extractProductName(message, previousContext = null) {
+    const normalized = this.normalizeArabic(message);
+    
+    // Product name mappings - both Arabic and English variations
+    const productPatterns = {
+      'معجون': ['معجون', 'putty', 'بوتي', 'معاجين'],
+      'فيلر': ['فيلر', 'filler', 'فلر', 'فيللر'],
+      'برايمر': ['برايمر', 'primer', 'برايم', 'بريمر'],
+      'ثنر': ['ثنر', 'thinner', 'تنر', 'ثينر', 'مخفف'],
+      'سبراي': ['سبراي', 'spray', 'اسبراي', 'رش'],
+      'دوكو': ['دوكو', 'duco', 'دوكة']
+    };
+    
+    // Check for product mentions
+    for (const [productName, variations] of Object.entries(productPatterns)) {
+      for (const variation of variations) {
+        if (normalized.includes(this.normalizeArabic(variation))) {
+          return productName;
+        }
+      }
+    }
+    
+    // Check context words that might indicate product switch
+    const switchPhrases = [
+      'بدل', 'غير', 'لا', 'مش', 'عايز', 'محتاج', 'اسأل عن', 'ايه اسعار',
+      'instead', 'other', 'different', 'want', 'need', 'about'
+    ];
+    
+    const hasSwitch = switchPhrases.some(phrase => normalized.includes(this.normalizeArabic(phrase)));
+    
+    // If user is switching products, try to detect the new product
+    if (hasSwitch && previousContext) {
+      for (const [productName, variations] of Object.entries(productPatterns)) {
+        for (const variation of variations) {
+          if (normalized.includes(this.normalizeArabic(variation))) {
+            return productName;
+          }
+        }
+      }
+    }
+    
+    return null;
+  }
+
+  /**
+   * Enhanced size/weight extraction with flexible input parsing
+   */
+  extractSize(message) {
+    const normalized = this.normalizeArabic(message);
+    
+    // Size patterns with flexible matching - order matters!
+    const sizePatterns = [
+      // Explicit numbers with units (check first)
+      { regex: /(\d+\.?\d*)\s*(كجم|كيلو|كغم|كج|kg|kilo)/i, unit: 'كجم' },
+      { regex: /(\d+\.?\d*)\s*(لتر|ليتر|لت|liter|litre|l)/i, unit: 'لتر' },
+      { regex: /(\d+\.?\d*)\s*(جالون|غالون|gallon)/i, unit: 'جالون' },
+      { regex: /(\d+\.?\d*)\s*(جرام|غرام|gram|g)/i, unit: 'جرام' },
+      
+      // Specific common sizes
+      { regex: /نصف\s*(كيلو|كجم)/i, value: '0.5', unit: 'كجم' },
+      { regex: /اتنين\s*وثمانيه|2\.8|٢\.٨/i, value: '2.8', unit: 'كجم' },
+      
+      // Just unit words without number (assume 1) - check after numbered patterns
+      { regex: /^(كيلو|كجم|كغم)$/i, value: '1', unit: 'كجم' },
+      { regex: /^(كيلو|كجم|كغم|kg|kilo)$/i, value: '1', unit: 'كجم' },
+      { regex: /^(لتر|ليتر|liter|litre)$/i, value: '1', unit: 'لتر' },
+      { regex: /^(جالون|غالون|gallon)$/i, value: '1', unit: 'جالون' },
+      
+      // Numbers alone (for context-based extraction)
+      { regex: /خمسه|خمس\s|^5$|^٥$/i, value: '5', unit: null },
+      { regex: /^واحد$|^1$|^١$/i, value: '1', unit: null },
+      { regex: /اتنين|تنين|^2$|^٢$/i, value: '2', unit: null },
+      { regex: /تلاته|ثلاثه|^3$|^٣$/i, value: '3', unit: null }
+    ];
+    
+    for (const pattern of sizePatterns) {
+      const match = normalized.match(pattern.regex);
+      if (match) {
+        if (pattern.value) {
+          // Predefined value
+          return {
+            value: pattern.value,
+            unit: pattern.unit,
+            raw: match[0]
+          };
+        } else {
+          // Extracted value
+          return {
+            value: match[1],
+            unit: pattern.unit,
+            raw: match[0]
+          };
+        }
+      }
+    }
+    
+    return null;
+  }
+
+  /**
+   * Enhanced quantity extraction with flexible formats
+   */
+  extractQuantity(message) {
+    const normalized = this.normalizeArabic(message);
+    
+    // Quantity patterns
+    const quantityPatterns = [
+      // Explicit cartons/boxes
+      { regex: /(\d+)\s*(كرتونه|كرتون|كرتونتين|carton|box)/i, type: 'carton' },
+      { regex: /(كرتونه|كرتون)\s*(\d+)?/i, value: '1', type: 'carton' },
+      { regex: /كرتونتين/i, value: '2', type: 'carton' },
+      
+      // Pieces/units
+      { regex: /(\d+)\s*(حبه|حبتين|قطعه|piece|unit)/i, type: 'piece' },
+      { regex: /(حبه|قطعه)\s*(\d+)?/i, value: '1', type: 'piece' },
+      { regex: /حبتين/i, value: '2', type: 'piece' },
+      
+      // Just numbers (ambiguous - could be cartons or pieces)
+      { regex: /واحد\b|1\b|١\b/, value: '1', type: 'unit' },
+      { regex: /اتنين\b|تنين\b|2\b|٢\b/, value: '2', type: 'unit' },
+      { regex: /تلاته\b|ثلاثه\b|3\b|٣\b/, value: '3', type: 'unit' }
+    ];
+    
+    for (const pattern of quantityPatterns) {
+      const match = normalized.match(pattern.regex);
+      if (match) {
+        if (pattern.value) {
+          return {
+            value: pattern.value,
+            type: pattern.type,
+            raw: match[0]
+          };
+        } else {
+          return {
+            value: match[1],
+            type: pattern.type,
+            raw: match[0]
+          };
+        }
+      }
+    }
+    
+    return null;
+  }
+
+  /**
+   * Extract product type/brand from message
+   */
+  extractProductType(message) {
+    const normalized = this.normalizeArabic(message);
+    
+    // Brand patterns
+    const brands = {
+      'NUMIX': ['numix', 'نيوميكس'],
+      'Top Plus': ['top plus', 'توب بلس', 'توب'],
+      'NC Duco': ['nc duco', 'ان سي دوكو', 'nc', 'دوكو'],
+      'أردني': ['اردني', 'jordanian'],
+      'NCR': ['ncr', 'ان سي ار']
+    };
+    
+    for (const [brandName, variations] of Object.entries(brands)) {
+      for (const variation of variations) {
+        if (normalized.includes(this.normalizeArabic(variation))) {
+          return { brand: brandName };
+        }
+      }
+    }
+    
+    // Type patterns (for products with types like filler)
+    const types = {
+      'K1': ['k1', 'كي 1', 'كي1', 'سريع', 'fast'],
+      'K2': ['k2', 'كي 2', 'كي2', 'بطي', 'بطئ', 'slow'],
+      '121': ['121', '١٢١', 'عادي', 'normal'],
+      '202': ['202', '٢٠٢', 'سريع', 'fast'],
+      '204': ['204', '٢٠٤', 'بطي', 'بطئ', 'slow']
+    };
+    
+    for (const [typeName, variations] of Object.entries(types)) {
+      for (const variation of variations) {
+        if (normalized.includes(this.normalizeArabic(variation))) {
+          return { type: typeName };
+        }
+      }
+    }
+    
+    return null;
+  }
+
+  /**
+   * Extract all entities from message in one pass
+   */
+  extractAllEntities(message, previousContext = null) {
+    return {
+      productName: this.extractProductName(message, previousContext),
+      size: this.extractSize(message),
+      quantity: this.extractQuantity(message),
+      productType: this.extractProductType(message)
+    };
+  }
+
+  /**
+   * Check completeness of collected information
+   */
+  checkInformationCompleteness(entities) {
+    const required = {
+      hasProduct: !!entities.productName,
+      hasSize: !!entities.size,
+      hasQuantity: !!entities.quantity
+    };
+    
+    const isComplete = required.hasProduct && required.hasSize && required.hasQuantity;
+    const missing = [];
+    
+    if (!required.hasProduct) missing.push('اسم المنتج');
+    if (!required.hasSize) missing.push('الحجم');
+    if (!required.hasQuantity) missing.push('الكمية');
+    
+    return {
+      isComplete,
+      required,
+      missing,
+      confidence: Object.values(required).filter(v => v).length / 3
+    };
+  }
+
+  /**
    * Detect intent from user message using keyword matching - IMPROVED
    */
   detectIntent(message) {
@@ -760,6 +988,132 @@ ${personality.emotional_intelligence.detect_sentiment ? 'اكتشف مشاعر �
   }
 
   /**
+   * Generate smart question for missing information
+   */
+  generateSmartQuestion(entities, productContext) {
+    const completeness = this.checkInformationCompleteness(entities);
+    
+    // If complete, no question needed
+    if (completeness.isComplete) {
+      return null;
+    }
+    
+    // Get product info from catalog
+    const catalog = knowledgeManager.getProductCatalog();
+    let productInfo = null;
+    
+    if (entities.productName) {
+      for (const category of catalog?.categories || []) {
+        if (category.subcategories) {
+          for (const sub of category.subcategories) {
+            if (this.normalizeArabic(sub.name) === this.normalizeArabic(entities.productName)) {
+              productInfo = sub;
+              break;
+            }
+          }
+        }
+        if (productInfo) break;
+      }
+    }
+    
+    // Generate contextual question based on what's missing
+    let question = '';
+    
+    if (!entities.productName) {
+      question = 'أهلاً بيك! 😊\n\nعايز تسأل عن أنهي منتج؟\n\n📦 المنتجات المتاحة:\n• معجون (Putty)\n• فيلر (Filler)\n• برايمر (Primer)\n• ثنر (Thinner)\n• سبراي (Spray)\n• دوكو (Duco)\n\nقولي أنهي واحد محتاجه! 👍';
+    } else if (!entities.size && !entities.productType) {
+      // Need both type and size
+      question = `تمام! ${entities.productName} 👍\n\n`;
+      
+      if (productInfo) {
+        if (productInfo.brands && productInfo.brands.length > 0) {
+          question += `🏷️ عندنا الماركات دي:\n${productInfo.brands.map(b => `• ${b}`).join('\n')}\n\n`;
+        }
+        if (productInfo.types && productInfo.types.length > 0) {
+          question += `📋 الأنواع المتاحة:\n${productInfo.types.map(t => `• ${t}`).join('\n')}\n\n`;
+        }
+        if (productInfo.available_sizes && productInfo.available_sizes.length > 0) {
+          question += `📏 الأحجام المتوفرة:\n${productInfo.available_sizes.map(s => `• ${s}`).join('\n')}\n\n`;
+        }
+      }
+      
+      question += 'قولي محتاج أنهي نوع وأنهي حجم؟ 😊';
+    } else if (!entities.size) {
+      question = `تمام! ${entities.productName}`;
+      if (entities.productType?.brand) question += ` ${entities.productType.brand}`;
+      if (entities.productType?.type) question += ` ${entities.productType.type}`;
+      question += ' 👍\n\n';
+      
+      if (productInfo?.available_sizes && productInfo.available_sizes.length > 0) {
+        question += `📏 الأحجام المتوفرة:\n${productInfo.available_sizes.map(s => `• ${s}`).join('\n')}\n\n`;
+      }
+      
+      question += 'محتاج أنهي حجم؟ (مثلاً: 1 كجم، 2.8 كجم، 5 لتر) 📦';
+    } else if (!entities.quantity) {
+      question = `تمام! ${entities.productName}`;
+      if (entities.productType?.brand) question += ` ${entities.productType.brand}`;
+      if (entities.size) question += ` ${entities.size.value}${entities.size.unit || ''}`;
+      question += ' 👍\n\n';
+      question += 'محتاج كام؟ (مثلاً: كرتونة، 2 كرتون، 5 حبات) 📊';
+    }
+    
+    return question;
+  }
+
+  /**
+   * Handle multi-turn conversation with progressive entity collection
+   */
+  async handleProgressiveEntityCollection(userId, message, previousContext) {
+    // Extract entities from current message
+    const newEntities = this.extractAllEntities(message, previousContext);
+    
+    // Get previously collected entities
+    const collectedEntities = contextManager.getProductContext(userId)?.collectedEntities || {};
+    
+    // Merge new entities with collected ones
+    const merged = {
+      productName: newEntities.productName || collectedEntities.productName || null,
+      size: newEntities.size || collectedEntities.size || null,
+      quantity: newEntities.quantity || collectedEntities.quantity || null,
+      productType: newEntities.productType || collectedEntities.productType || null
+    };
+    
+    // Update context with merged entities
+    contextManager.updateCollectedEntities(userId, merged);
+    
+    // Check if we have everything
+    const completeness = this.checkInformationCompleteness(merged);
+    
+    if (completeness.isComplete) {
+      // We have all information - try to find price
+      const productName = merged.productName;
+      const detailsMessage = `${merged.productType?.brand || ''} ${merged.productType?.type || ''} ${merged.size?.value || ''} ${merged.size?.unit || ''} ${merged.quantity?.value || ''} ${merged.quantity?.type || ''}`;
+      
+      const priceResult = await this.findPriceFromDetails(productName, detailsMessage);
+      
+      // Clear context after providing price
+      contextManager.clearProductContext(userId);
+      
+      return priceResult;
+    } else {
+      // Still missing information - ask smart question
+      const question = this.generateSmartQuestion(merged, previousContext);
+      
+      // Keep context active
+      contextManager.setProductContext(userId, merged.productName || 'منتج', merged);
+      
+      return {
+        response: question,
+        source: 'progressive_collection',
+        intent: 'collecting_product_info',
+        confidence: completeness.confidence,
+        waitingForDetails: true,
+        collectedEntities: merged
+      };
+    }
+  }
+
+  /**
    * Main method to process message and generate intelligent response
    */
   async processMessage(userId, message) {
@@ -770,32 +1124,46 @@ ${personality.emotional_intelligence.detect_sentiment ? 'اكتشف مشاعر �
         aiEnabled: this.aiEnabled
       });
 
-      // Step 0: Check if this is a follow-up to a product inquiry
+      // Step 0: Extract entities from current message
       const productContext = contextManager.getProductContext(userId);
-      const productDetails = this.detectProductDetailsInMessage(message);
+      const currentEntities = this.extractAllEntities(message, productContext?.product);
       
-      if (productContext && productContext.waitingForDetails && productDetails.isComplete) {
-        logger.info('Follow-up detected with product details', {
+      // Check if user is switching products
+      const isProductSwitch = currentEntities.productName && 
+                              productContext?.product && 
+                              currentEntities.productName !== productContext.product;
+      
+      if (isProductSwitch) {
+        logger.info('Product switch detected', {
+          from: productContext.product,
+          to: currentEntities.productName
+        });
+        // Clear old context and start fresh
+        contextManager.clearProductContext(userId);
+      }
+      
+      // Step 1: Handle progressive entity collection if in product inquiry mode
+      if (productContext && productContext.waitingForDetails) {
+        logger.info('Progressive entity collection active', {
           product: productContext.product,
-          details: productDetails
+          collected: productContext.collectedEntities
         });
         
-        // Extract details and find price
-        const priceResult = await this.findPriceFromDetails(
-          productContext.product, 
-          message
+        const collectionResult = await this.handleProgressiveEntityCollection(
+          userId, 
+          message, 
+          productContext.product
         );
         
-        contextManager.clearProductContext(userId);
-        
         // Add to history
-        contextManager.addMessage(userId, 'user', message, 'price_details_provided');
-        contextManager.addMessage(userId, 'assistant', priceResult.response, 'price_response');
+        contextManager.addMessage(userId, 'user', message, 'entity_collection');
+        contextManager.addMessage(userId, 'assistant', collectionResult.response, 
+                                  collectionResult.intent || 'entity_response');
         
-        return priceResult;
+        return collectionResult;
       }
 
-      // Step 1: Detect intent
+      // Step 2: Detect intent
       const detectedIntent = this.detectIntent(message);
       
       logger.debug('Intent detected', {
@@ -804,7 +1172,7 @@ ${personality.emotional_intelligence.detect_sentiment ? 'اكتشف مشاعر �
         priority: detectedIntent?.priority
       });
 
-      // Step 2: Check for individual customer (business rule)
+      // Step 3: Check for individual customer (business rule)
       if (!knowledgeManager.isWholesaleCustomer(message)) {
         const templates = knowledgeManager.getResponseTemplates();
         return {
@@ -815,13 +1183,49 @@ ${personality.emotional_intelligence.detect_sentiment ? 'اكتشف مشاعر �
         };
       }
 
-      // Step 3: Enrich context with relevant knowledge
+      // Step 4: If price/product inquiry with entities detected, start collection
+      if ((detectedIntent?.intent === 'price_inquiry' || detectedIntent?.intent === 'product_inquiry') 
+          && currentEntities.productName) {
+        
+        const completeness = this.checkInformationCompleteness(currentEntities);
+        
+        if (completeness.isComplete) {
+          // All info provided in one message - find price immediately
+          const detailsMessage = `${currentEntities.productType?.brand || ''} ${currentEntities.productType?.type || ''} ${currentEntities.size?.value || ''} ${currentEntities.size?.unit || ''} ${currentEntities.quantity?.value || ''} ${currentEntities.quantity?.type || ''}`;
+          
+          const priceResult = await this.findPriceFromDetails(currentEntities.productName, detailsMessage);
+          
+          contextManager.addMessage(userId, 'user', message, detectedIntent.intent);
+          contextManager.addMessage(userId, 'assistant', priceResult.response, 'price_response');
+          
+          return priceResult;
+        } else {
+          // Start progressive collection
+          contextManager.setProductContext(userId, currentEntities.productName, currentEntities);
+          
+          const question = this.generateSmartQuestion(currentEntities, null);
+          
+          contextManager.addMessage(userId, 'user', message, detectedIntent.intent);
+          contextManager.addMessage(userId, 'assistant', question, 'collecting_info');
+          
+          return {
+            response: question,
+            source: 'progressive_collection_start',
+            intent: 'collecting_product_info',
+            confidence: completeness.confidence,
+            waitingForDetails: true,
+            collectedEntities: currentEntities
+          };
+        }
+      }
+
+      // Step 5: Enrich context with relevant knowledge
       const enrichedContext = await this.enrichContext(userId, message, detectedIntent);
 
-      // Step 4: Generate response (AI or knowledge-based)
+      // Step 6: Generate response (AI or knowledge-based)
       const result = await this.generateAIResponse(userId, message, enrichedContext);
 
-      // Step 5: Add message to context history
+      // Step 7: Add message to context history
       contextManager.addMessage(userId, 'user', message, detectedIntent?.intent);
       contextManager.addMessage(userId, 'assistant', result.response, detectedIntent?.intent);
 
@@ -830,7 +1234,7 @@ ${personality.emotional_intelligence.detect_sentiment ? 'اكتشف مشاعر �
         contextManager.setLastTopic(userId, detectedIntent.intent);
       }
 
-      // Step 6: If we asked for product details, set context
+      // Step 8: If we asked for product details, set context
       if (result.waitingForProductDetails && result.productName) {
         contextManager.setProductContext(userId, result.productName);
       }
