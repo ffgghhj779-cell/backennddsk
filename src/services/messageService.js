@@ -17,6 +17,7 @@ const facebookService = require('./facebookService');
 const knowledgeManager = require('./knowledgeManager');
 const contextManager = require('./contextManager');
 const intelligentResponseEngine = require('./intelligentResponseEngine');
+const smartResponseEngine = require('./smartResponseEngine');
 
 // ============================================================================
 // INITIALIZATION
@@ -93,20 +94,28 @@ const processTextMessage = async (senderId, messageText, timestamp) => {
       }
     }
 
-    // Process message through intelligent engine
+    // Choose engine based on OpenAI availability
+    const useSmartEngine = !intelligentResponseEngine.isAIEnabled();
+    
     console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log('🤖 INTELLIGENT RESPONSE ENGINE');
+    console.log(`🤖 ${useSmartEngine ? 'SMART RESPONSE ENGINE (FREE)' : 'AI RESPONSE ENGINE'}`);
     console.log(`📨 User: "${sanitizedText}"`);
     console.log(`👤 User ID: ${senderId}${userName ? ` (${userName})` : ''}`);
-    console.log(`🧠 Mode: ${intelligentResponseEngine.isAIEnabled() ? 'AI + Knowledge' : 'Knowledge Only'}`);
+    console.log(`🧠 Mode: ${useSmartEngine ? 'Smart NLP + Pattern Matching' : 'AI + Knowledge'}`);
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     
-    const result = await intelligentResponseEngine.processMessage(senderId, sanitizedText);
+    // Use smart engine (free) if no OpenAI key
+    const result = useSmartEngine 
+      ? await smartResponseEngine.processMessage(senderId, sanitizedText)
+      : await intelligentResponseEngine.processMessage(senderId, sanitizedText);
     
     console.log('✅ RESPONSE GENERATED');
     console.log(`   Source: ${result.source}`);
     console.log(`   Intent: ${result.intent || 'unknown'}`);
     console.log(`   Confidence: ${result.confidence ? (result.confidence * 100).toFixed(1) + '%' : 'N/A'}`);
+    if (result.entities && Object.keys(result.entities).length > 0) {
+      console.log(`   Entities: ${JSON.stringify(result.entities)}`);
+    }
     if (result.tokensUsed) {
       console.log(`   Tokens Used: ${result.tokensUsed}`);
     }
