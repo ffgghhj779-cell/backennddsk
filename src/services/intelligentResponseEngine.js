@@ -343,18 +343,59 @@ ${personality.emotional_intelligence.detect_sentiment ? 'اكتشف مشاعر �
 
       case 'price_inquiry':
         // Check if they mentioned a specific product
-        if (this.normalizeArabic(userMessage).includes('معجون') || 
-            this.normalizeArabic(userMessage).includes('putty')) {
-          response = this.getProductSpecificResponse('معجون', enrichedContext);
-        } else if (this.normalizeArabic(userMessage).includes('فيلر') || 
-                   this.normalizeArabic(userMessage).includes('filler')) {
-          response = this.getProductSpecificResponse('فيلر', enrichedContext);
-        } else if (this.normalizeArabic(userMessage).includes('ثنر') || 
-                   this.normalizeArabic(userMessage).includes('thinner')) {
-          response = this.getProductSpecificResponse('ثنر', enrichedContext);
-        } else if (this.normalizeArabic(userMessage).includes('سبراي') || 
-                   this.normalizeArabic(userMessage).includes('spray')) {
-          response = this.getProductSpecificResponse('سبراي', enrichedContext);
+        const priceNormalized = this.normalizeArabic(userMessage);
+        if (priceNormalized.includes('معجون') || priceNormalized.includes('putty')) {
+          const productResponse = this.getProductSpecificResponse('معجون', enrichedContext);
+          response = productResponse.response || productResponse;
+          if (productResponse.waitingForProductDetails) {
+            return {
+              response: response,
+              source: 'knowledge_base',
+              intent: intent,
+              confidence: enrichedContext.intent?.confidence || 0,
+              waitingForProductDetails: true,
+              productName: 'معجون'
+            };
+          }
+        } else if (priceNormalized.includes('فيلر') || priceNormalized.includes('filler')) {
+          const productResponse = this.getProductSpecificResponse('فيلر', enrichedContext);
+          response = productResponse.response || productResponse;
+          if (productResponse.waitingForProductDetails) {
+            return {
+              response: response,
+              source: 'knowledge_base',
+              intent: intent,
+              confidence: enrichedContext.intent?.confidence || 0,
+              waitingForProductDetails: true,
+              productName: 'فيلر'
+            };
+          }
+        } else if (priceNormalized.includes('ثنر') || priceNormalized.includes('thinner')) {
+          const productResponse = this.getProductSpecificResponse('ثنر', enrichedContext);
+          response = productResponse.response || productResponse;
+          if (productResponse.waitingForProductDetails) {
+            return {
+              response: response,
+              source: 'knowledge_base',
+              intent: intent,
+              confidence: enrichedContext.intent?.confidence || 0,
+              waitingForProductDetails: true,
+              productName: 'ثنر'
+            };
+          }
+        } else if (priceNormalized.includes('سبراي') || priceNormalized.includes('spray')) {
+          const productResponse = this.getProductSpecificResponse('سبراي', enrichedContext);
+          response = productResponse.response || productResponse;
+          if (productResponse.waitingForProductDetails) {
+            return {
+              response: response,
+              source: 'knowledge_base',
+              intent: intent,
+              confidence: enrichedContext.intent?.confidence || 0,
+              waitingForProductDetails: true,
+              productName: 'سبراي'
+            };
+          }
         } else {
           response = templates.response_templates.price_inquiry_without_details.message;
         }
@@ -384,17 +425,83 @@ ${personality.emotional_intelligence.detect_sentiment ? 'اكتشف مشاعر �
         // Check if asking about specific product
         const normalizedMsg = this.normalizeArabic(userMessage);
         if (normalizedMsg.includes('معجون')) {
-          response = this.getProductSpecificResponse('معجون', enrichedContext);
+          const productResponse = this.getProductSpecificResponse('معجون', enrichedContext);
+          response = productResponse.response || productResponse;
+          if (productResponse.waitingForProductDetails) {
+            return {
+              response: response,
+              source: 'knowledge_base',
+              intent: intent,
+              confidence: enrichedContext.intent?.confidence || 0,
+              waitingForProductDetails: true,
+              productName: 'معجون'
+            };
+          }
         } else if (normalizedMsg.includes('فيلر')) {
-          response = this.getProductSpecificResponse('فيلر', enrichedContext);
+          const productResponse = this.getProductSpecificResponse('فيلر', enrichedContext);
+          response = productResponse.response || productResponse;
+          if (productResponse.waitingForProductDetails) {
+            return {
+              response: response,
+              source: 'knowledge_base',
+              intent: intent,
+              confidence: enrichedContext.intent?.confidence || 0,
+              waitingForProductDetails: true,
+              productName: 'فيلر'
+            };
+          }
         } else if (normalizedMsg.includes('برايمر')) {
-          response = this.getProductSpecificResponse('برايمر', enrichedContext);
+          const productResponse = this.getProductSpecificResponse('برايمر', enrichedContext);
+          response = productResponse.response || productResponse;
+          if (productResponse.waitingForProductDetails) {
+            return {
+              response: response,
+              source: 'knowledge_base',
+              intent: intent,
+              confidence: enrichedContext.intent?.confidence || 0,
+              waitingForProductDetails: true,
+              productName: 'برايمر'
+            };
+          }
         } else if (normalizedMsg.includes('ثنر')) {
-          response = this.getProductSpecificResponse('ثنر', enrichedContext);
+          const productResponse = this.getProductSpecificResponse('ثنر', enrichedContext);
+          response = productResponse.response || productResponse;
+          if (productResponse.waitingForProductDetails) {
+            return {
+              response: response,
+              source: 'knowledge_base',
+              intent: intent,
+              confidence: enrichedContext.intent?.confidence || 0,
+              waitingForProductDetails: true,
+              productName: 'ثنر'
+            };
+          }
         } else if (normalizedMsg.includes('سبراي')) {
-          response = this.getProductSpecificResponse('سبراي', enrichedContext);
+          const productResponse = this.getProductSpecificResponse('سبراي', enrichedContext);
+          response = productResponse.response || productResponse;
+          if (productResponse.waitingForProductDetails) {
+            return {
+              response: response,
+              source: 'knowledge_base',
+              intent: intent,
+              confidence: enrichedContext.intent?.confidence || 0,
+              waitingForProductDetails: true,
+              productName: 'سبراي'
+            };
+          }
         } else if (normalizedMsg.includes('دوكو')) {
-          response = this.getProductSpecificResponse('دوكو', enrichedContext);
+          const productResponse = this.getProductSpecificResponse('دوكو', enrichedContext);
+          response = productResponse.response || productResponse;
+          if (productResponse.waitingForProductDetails) {
+            return {
+              response: response,
+              source: 'knowledge_base',
+              intent: intent,
+              confidence: enrichedContext.intent?.confidence || 0,
+              waitingForProductDetails: true,
+              productName: 'دوكو'
+            };
+          }
         } else {
           response = templates.response_templates.product_categories.message;
         }
@@ -452,10 +559,192 @@ ${personality.emotional_intelligence.detect_sentiment ? 'اكتشف مشاعر �
 
     // Add sample pricing
     response += `💰 للأسعار:\nمحتاج أعرف الماركة + الحجم + الكمية بالظبط\n\n`;
-    response += `مثال: "محتاج معجون Top Plus 2.8 كجم، كرتونة"\n\n`;
+    response += `مثال: "ماركة Top Plus حجم 2.8 كجم كرتونة"\n\n`;
     response += `📞 قسم الجملة: 01155501111\n📱 واتساب: 201155501111`;
 
-    return response;
+    return {
+      response: response,
+      waitingForProductDetails: true,
+      productName: productName
+    };
+  }
+
+  /**
+   * Find price from user-provided details
+   */
+  async findPriceFromDetails(productName, detailsMessage) {
+    const pricing = knowledgeManager.getPricing();
+    
+    if (!pricing) {
+      return {
+        response: 'عذراً، معلومات الأسعار غير متوفرة حالياً.\n\n📞 للتواصل المباشر:\nقسم الجملة: 01155501111',
+        source: 'error',
+        intent: 'price_lookup',
+        confidence: 0
+      };
+    }
+
+    const normalized = this.normalizeArabic(detailsMessage);
+    const productNormalized = this.normalizeArabic(productName);
+    
+    // Extract brand
+    let brand = null;
+    const brands = {
+      'numix': 'NUMIX',
+      'top plus': 'Top Plus',
+      'nc duco': 'NC Duco',
+      'اردني': 'أردني',
+      'ncr': 'NCR'
+    };
+    
+    for (const [key, value] of Object.entries(brands)) {
+      if (normalized.includes(key)) {
+        brand = value;
+        break;
+      }
+    }
+
+    // Extract size/quantity info
+    let sizeInfo = '';
+    if (normalized.includes('2.8') || normalized.includes('٢.٨')) sizeInfo = '2.8';
+    else if (normalized.includes('5')) sizeInfo = '5';
+    else if (normalized.includes('نصف')) sizeInfo = '0.5';
+    else if (normalized.includes('1')) sizeInfo = '1';
+
+    // Map product name to category
+    const productCategoryMap = {
+      'معجون': 'putty',
+      'فيلر': 'filler_primer',
+      'برايمر': 'filler_primer',
+      'ثنر': 'thinner',
+      'سبراي': 'spray',
+      'دوكو': 'putty'
+    };
+    
+    const targetCategory = productCategoryMap[productName] || null;
+
+    // Find matching products
+    const matches = [];
+    
+    for (const [categoryKey, categoryData] of Object.entries(pricing.products)) {
+      // Skip if we know the product category and this isn't it
+      if (targetCategory && categoryKey !== targetCategory) {
+        continue;
+      }
+      
+      if (categoryData.items) {
+        for (const item of categoryData.items) {
+          const itemNormalized = this.normalizeArabic(item.name);
+          
+          // Check if it matches product type, brand, and size
+          let score = 0;
+          
+          // Match product type (معجون, فيلر, etc.)
+          if (productNormalized.includes('معجون') && 
+              (itemNormalized.includes('معجون') || categoryKey === 'putty')) {
+            score += 3;
+          } else if (productNormalized.includes('فيلر') && 
+                     (itemNormalized.includes('فيلر') || itemNormalized.includes('filler'))) {
+            score += 3;
+          } else if (productNormalized.includes('ثنر') && categoryKey === 'thinner') {
+            score += 3;
+          } else if (productNormalized.includes('سبراي') && categoryKey === 'spray') {
+            score += 3;
+          }
+          
+          // Match brand
+          if (brand && itemNormalized.includes(this.normalizeArabic(brand))) {
+            score += 2;
+          }
+          
+          // Match size
+          if (sizeInfo && item.size && item.size.includes(sizeInfo)) {
+            score += 2;
+          }
+          
+          if (score >= 4) {
+            matches.push({
+              item,
+              score,
+              category: categoryKey
+            });
+          }
+        }
+      }
+    }
+
+    // Sort by score
+    matches.sort((a, b) => b.score - a.score);
+
+    if (matches.length === 0) {
+      return {
+        response: `للأسف، مقدرتش ألاقي سعر ${productName} ${brand || ''} ${sizeInfo ? sizeInfo + ' كجم/لتر' : ''}.\n\n📞 للاستفسار الدقيق:\nقسم الجملة: 01155501111\nواتساب: 201155501111\n\nممكن تجرب تكتب بوضوح أكتر مثلاً:\n"NUMIX 2.8 كجم"`,
+        source: 'price_not_found',
+        intent: 'price_lookup',
+        confidence: 0.3
+      };
+    }
+
+    // Build response with prices
+    let response = `✅ لقيت الأسعار!\n\n`;
+    
+    const topMatch = matches[0].item;
+    response += `📦 ${topMatch.name}\n`;
+    response += `📏 الحجم: ${topMatch.size}\n\n`;
+    
+    response += `💰 الأسعار (جملة):\n`;
+    if (topMatch.price_without_tax) {
+      response += `• بدون ضريبة: ${topMatch.price_without_tax.toFixed(2)} جنيه\n`;
+    }
+    if (topMatch.price_with_tax) {
+      response += `• بالضريبة: ${topMatch.price_with_tax.toFixed(2)} جنيه\n`;
+    }
+    if (topMatch.carton_price) {
+      response += `• سعر الكرتونة: ${topMatch.carton_price.toFixed(2)} جنيه\n`;
+    }
+
+    // Calculate for quantity if mentioned
+    const hasQuantity = normalized.includes('كرتونتين');
+    if (hasQuantity && topMatch.carton_price) {
+      const total = topMatch.carton_price * 2;
+      response += `\n🧮 كرتونتين = ${total.toFixed(2)} جنيه\n`;
+    }
+
+    response += `\n📝 ملحوظة: الأسعار قابلة للتغيير حسب الكمية\n`;
+    response += `\n📞 للطلب والتأكيد:\nقسم الجملة: 01155501111\nواتساب: 201155501111`;
+
+    return {
+      response: response,
+      source: 'price_lookup',
+      intent: 'price_lookup',
+      confidence: 1.0
+    };
+  }
+
+  /**
+   * Check if message is a follow-up with product details
+   */
+  detectProductDetailsInMessage(message) {
+    const normalized = this.normalizeArabic(message);
+    
+    // Check for brands
+    const brands = ['numix', 'top plus', 'nc duco', 'اردني', 'ncr'];
+    const hasBrand = brands.some(brand => normalized.includes(brand));
+    
+    // Check for sizes
+    const sizes = ['كجم', 'كيلو', 'لتر', 'جالون', 'kg', 'liter', 'gallon'];
+    const hasSize = sizes.some(size => normalized.includes(size));
+    
+    // Check for quantities
+    const quantities = ['كرتونه', 'كرتونتين', 'كرتون', 'حبه', 'حبتين', 'قطعه', 'carton'];
+    const hasQuantity = quantities.some(qty => normalized.includes(qty));
+    
+    return {
+      hasBrand,
+      hasSize,
+      hasQuantity,
+      isComplete: hasBrand && hasSize && hasQuantity
+    };
   }
 
   /**
@@ -468,6 +757,31 @@ ${personality.emotional_intelligence.detect_sentiment ? 'اكتشف مشاعر �
         messageLength: message.length,
         aiEnabled: this.aiEnabled
       });
+
+      // Step 0: Check if this is a follow-up to a product inquiry
+      const productContext = contextManager.getProductContext(userId);
+      const productDetails = this.detectProductDetailsInMessage(message);
+      
+      if (productContext && productContext.waitingForDetails && productDetails.isComplete) {
+        logger.info('Follow-up detected with product details', {
+          product: productContext.product,
+          details: productDetails
+        });
+        
+        // Extract details and find price
+        const priceResult = await this.findPriceFromDetails(
+          productContext.product, 
+          message
+        );
+        
+        contextManager.clearProductContext(userId);
+        
+        // Add to history
+        contextManager.addMessage(userId, 'user', message, 'price_details_provided');
+        contextManager.addMessage(userId, 'assistant', priceResult.response, 'price_response');
+        
+        return priceResult;
+      }
 
       // Step 1: Detect intent
       const detectedIntent = this.detectIntent(message);
@@ -502,6 +816,11 @@ ${personality.emotional_intelligence.detect_sentiment ? 'اكتشف مشاعر �
       // Update last topic
       if (detectedIntent) {
         contextManager.setLastTopic(userId, detectedIntent.intent);
+      }
+
+      // Step 6: If we asked for product details, set context
+      if (result.waitingForProductDetails && result.productName) {
+        contextManager.setProductContext(userId, result.productName);
       }
 
       return result;

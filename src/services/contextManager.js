@@ -133,6 +133,50 @@ class ContextManager {
   }
 
   /**
+   * Set current product context (for multi-turn product inquiries)
+   */
+  setProductContext(userId, productName) {
+    this.updateContext(userId, { 
+      currentProduct: productName,
+      waitingForProductDetails: true,
+      productContextTimestamp: Date.now()
+    });
+  }
+
+  /**
+   * Get current product context
+   */
+  getProductContext(userId) {
+    const context = this.getContext(userId);
+    
+    // Check if product context is recent (within 5 minutes)
+    if (context.currentProduct && context.productContextTimestamp) {
+      const age = Date.now() - context.productContextTimestamp;
+      const fiveMinutes = 5 * 60 * 1000;
+      
+      if (age < fiveMinutes) {
+        return {
+          product: context.currentProduct,
+          waitingForDetails: context.waitingForProductDetails
+        };
+      }
+    }
+    
+    return null;
+  }
+
+  /**
+   * Clear product context
+   */
+  clearProductContext(userId) {
+    this.updateContext(userId, {
+      currentProduct: null,
+      waitingForProductDetails: false,
+      productContextTimestamp: null
+    });
+  }
+
+  /**
    * Get user context
    */
   getContext(userId) {
