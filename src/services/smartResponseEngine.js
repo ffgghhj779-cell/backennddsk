@@ -163,9 +163,9 @@ class SmartResponseEngine {
   }
 
   /**
-   * Extract entities (products, brands, sizes, quantities)
+   * Extract entities (products, brands, sizes, quantities) - ENHANCED
    */
-  extractEntities(message) {
+  extractEntities(message, contextProduct = null) {
     const normalized = this.normalizeArabic(message);
     
     const entities = {
@@ -175,7 +175,7 @@ class SmartResponseEngine {
       quantity: null
     };
     
-    // Extract product
+    // Extract product (or use context)
     const products = ['معجون', 'فيلر', 'برايمر', 'ثنر', 'سبراي', 'دوكو'];
     for (const product of products) {
       if (normalized.includes(product)) {
@@ -184,14 +184,26 @@ class SmartResponseEngine {
       }
     }
     
-    // Extract brand
+    // If no product found but we have context, use it
+    if (!entities.product && contextProduct) {
+      entities.product = contextProduct;
+    }
+    
+    // Extract brand - More flexible matching
     const brands = {
       'numix': 'NUMIX',
+      'نيوميكس': 'NUMIX',
       'top plus': 'Top Plus',
+      'توب بلس': 'Top Plus',
+      'توب': 'Top Plus',
       'nc duco': 'NC Duco',
+      'nc': 'NC Duco',
+      'دوكو': 'NC Duco',
       'اردني': 'أردني',
+      'أردني': 'أردني',
       'ncr': 'NCR'
     };
+    
     for (const [key, value] of Object.entries(brands)) {
       if (normalized.includes(key)) {
         entities.brand = value;
@@ -199,30 +211,98 @@ class SmartResponseEngine {
       }
     }
     
-    // Extract size
+    // Extract size - More patterns
     const sizePatterns = [
-      { pattern: /(\d+\.?\d*)\s*(كجم|كيلو|kg)/, unit: 'كجم' },
-      { pattern: /(\d+\.?\d*)\s*(لتر|ليتر|l)/, unit: 'لتر' },
-      { pattern: /(جالون|gallon)/, value: 'جالون' },
-      { pattern: /(نصف)\s*(كجم|كيلو)/, value: '0.5 كجم' }
+      { pattern: /(\d+\.?\d*)\s*(كجم|كيلو|كج|kg)/i, unit: 'كجم' },
+      { pattern: /(\d+\.?\d*)\s*(لتر|ليتر|l)/i, unit: 'لتر' },
+      { pattern: /(جالون|gallon)/i, value: 'جالون' },
+      { pattern: /(نصف)\s*(كجم|كيلو|كج)/i, value: '0.5' },
+      { pattern: /(\d+\.?\d*)/, unit: 'كجم' } // Just number, assume كجم
     ];
     
     for (const { pattern, unit, value } of sizePatterns) {
       const match = normalized.match(pattern);
       if (match) {
-        entities.size = value || `${match[1]} ${unit}`;
+        if (value) {
+          entities.size = value;
+        } else {
+          entities.size = match[1];
+        }
         break;
       }
     }
     
-    // Extract quantity
-    if (normalized.includes('كرتونتين') || normalized.includes('اتنين كرتونه')) {
-      entities.quantity = '2 كرتونة';
-    } else if (normalized.includes('كرتونه') || normalized.includes('كرتون')) {
-      entities.quantity = 'كرتونة';
+    // Extract quantity - More variations
+    if (normalized.includes('كرتونتين') || normalized.includes('2 كرتون') || 
+        normalized.includes('اتنين كرتون') || normalized.includes('كرتونتان')) {
+      entities.quantity = '2';
+    } else if (normalized.includes('٣ كرتون') || normalized.includes('ثلاث كرتون') ||
+               normalized.includes('3 كرتون')) {
+      entities.quantity = '3';
+    } else if (normalized.includes('كرتونه') || normalized.includes('كرتون') ||
+               normalized.includes('١ كرتون')) {
+      entities.quantity = '1';
+    } else if (normalized.includes('حبه') || normalized.includes('قطعه') ||
+               normalized.includes('علبه')) {
+      entities.quantity = 'قطعة';
     }
     
     return entities;
+  }
+
+  /**
+   * Generate step-by-step guided response
+   */
+  generateGuidedResponse(productContext, entities, message) {
+    const product = productContext.product;
+    
+    // Step 1: Has product, need brand
+    if (!entities.brand) {
+      const catalog = knowledgeManager.getProductCatalog();
+      let productInfo = null;
+      
+      for (const category of catalog.categories) {
+        if (category.subcategories) {
+          for (const sub of category.subcategories) {
+            if (this.normalizeArabic(sub.name).includes(this.normalizeArabic(product))) {
+              productInfo = sub;
+              break;
+            }
+          }
+        }
+        if (productInfo) break;
+      }
+      
+      let response = `تمام! ${product} 👍\n\nعايز أي ماركة؟\n\n`;
+      
+      if (productInfo && productInfo.brands) {
+        response += `الماركات المتوفرة:\n`;
+        productInfo.brands.forEach((brand, i) => {
+          response += `${i + 1}. ${brand}\n`;
+        });
+      }
+      
+      return { response, needsBrand: true };
+    }
+    
+    // Step 2: Has brand, need size
+    if (!entities.size) {
+      let response = `ممتاز! ${entities.brand} اختيار كويس 👍\n\nعايز أي حجم؟\n\n`;
+      response += `مثلاً: 1 كيلو، 2.8 كيلو، 5 كيلو، جالون`;
+      
+      return { response, needsSize: true };
+    }
+    
+    // Step 3: Has brand + size, need quantity
+    if (!entities.quantity) {
+      let response = `عظيم! ${entities.brand} حجم ${entities.size} 👍\n\nمحتاج كام؟\n\n`;
+      response += `مثلاً: كرتونة، كرتونتين، 3 كراتين`;
+      
+      return { response, needsQuantity: true };
+    }
+    
+    // All details complete - get price
+    return null;
   }
 
   /**
@@ -234,6 +314,37 @@ class SmartResponseEngine {
     // Use context to make response more natural
     const isFollowUp = context && context.messageCount > 1;
     const userName = contextManager.getUserName(context.userId);
+    
+    // Check for product context and guide step-by-step
+    const productContext = contextManager.getProductContext(context.userId);
+    if (productContext && productContext.waitingForDetails) {
+      // Extract entities with context
+      const contextEntities = this.extractEntities(message, productContext.product);
+      
+      // Merge with collected entities from previous messages
+      const collectedEntities = productContext.collectedEntities || {};
+      
+      // Merge: collected → detected → context
+      entities.product = entities.product || contextEntities.product || collectedEntities.product || productContext.product;
+      entities.brand = entities.brand || contextEntities.brand || collectedEntities.brand;
+      entities.size = entities.size || contextEntities.size || collectedEntities.size;
+      entities.quantity = entities.quantity || contextEntities.quantity || collectedEntities.quantity;
+      
+      // Update collected entities
+      const updatedEntities = contextManager.updateCollectedEntities(context.userId, entities);
+      
+      // Generate guided response with updated entities
+      const guidedResponse = this.generateGuidedResponse(productContext, updatedEntities, message);
+      
+      if (guidedResponse) {
+        // Still need more info - keep context
+        return guidedResponse.response;
+      } else {
+        // All details complete - get price
+        contextManager.clearProductContext(context.userId);
+        return this.getPriceResponse(updatedEntities);
+      }
+    }
     
     let response = '';
     
@@ -256,12 +367,19 @@ class SmartResponseEngine {
         break;
         
       case 'product_inquiry':
-        if (entities.product && entities.brand && entities.size) {
+        if (entities.product && entities.brand && entities.size && entities.quantity) {
           // Has complete details - get price directly
           response = this.getPriceResponse(entities);
         } else if (entities.product) {
-          // Specific product inquiry but missing details
-          response = this.getProductResponse(entities.product);
+          // Start guided flow
+          const guidedResponse = this.generateGuidedResponse({ product: entities.product }, entities, message);
+          if (guidedResponse) {
+            response = guidedResponse.response;
+            // Set context for next message
+            contextManager.setProductContext(context.userId, entities.product);
+          } else {
+            response = this.getPriceResponse(entities);
+          }
         } else {
           // General product inquiry
           response = templates.response_templates.product_categories.message;
@@ -269,12 +387,19 @@ class SmartResponseEngine {
         break;
         
       case 'price_inquiry':
-        if (entities.product && entities.brand && entities.size) {
+        if (entities.product && entities.brand && entities.size && entities.quantity) {
           // Has all details - lookup price
           response = this.getPriceResponse(entities);
         } else if (entities.product) {
-          // Has product but missing details
-          response = this.getProductResponse(entities.product);
+          // Start guided flow
+          const guidedResponse = this.generateGuidedResponse({ product: entities.product }, entities, message);
+          if (guidedResponse) {
+            response = guidedResponse.response;
+            // Set context for next message
+            contextManager.setProductContext(context.userId, entities.product);
+          } else {
+            response = this.getPriceResponse(entities);
+          }
         } else {
           // No details
           response = templates.response_templates.price_inquiry_without_details.message;

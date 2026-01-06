@@ -135,12 +135,35 @@ class ContextManager {
   /**
    * Set current product context (for multi-turn product inquiries)
    */
-  setProductContext(userId, productName) {
+  setProductContext(userId, productName, entities = {}) {
     this.updateContext(userId, { 
       currentProduct: productName,
       waitingForProductDetails: true,
-      productContextTimestamp: Date.now()
+      productContextTimestamp: Date.now(),
+      collectedEntities: entities || {}
     });
+  }
+
+  /**
+   * Update collected entities
+   */
+  updateCollectedEntities(userId, newEntities) {
+    const session = this.getSession(userId);
+    const current = session.context.collectedEntities || {};
+    
+    // Merge new entities with existing ones
+    const updated = {
+      ...current,
+      ...Object.fromEntries(
+        Object.entries(newEntities).filter(([_, v]) => v != null)
+      )
+    };
+    
+    this.updateContext(userId, {
+      collectedEntities: updated
+    });
+    
+    return updated;
   }
 
   /**
@@ -157,7 +180,8 @@ class ContextManager {
       if (age < fiveMinutes) {
         return {
           product: context.currentProduct,
-          waitingForDetails: context.waitingForProductDetails
+          waitingForDetails: context.waitingForProductDetails,
+          collectedEntities: context.collectedEntities || {}
         };
       }
     }
