@@ -256,8 +256,11 @@ class SmartResponseEngine {
         break;
         
       case 'product_inquiry':
-        if (entities.product) {
-          // Specific product inquiry
+        if (entities.product && entities.brand && entities.size) {
+          // Has complete details - get price directly
+          response = this.getPriceResponse(entities);
+        } else if (entities.product) {
+          // Specific product inquiry but missing details
           response = this.getProductResponse(entities.product);
         } else {
           // General product inquiry
