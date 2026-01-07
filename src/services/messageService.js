@@ -16,7 +16,7 @@ const { sanitizeText, isWithinMessagingWindow } = require('../utils/validator');
 const facebookService = require('./facebookService');
 const knowledgeManager = require('./knowledgeManager');
 const contextManager = require('./contextManager');
-const conversationEngine = require('./conversationEngine');
+const intelligentConversationManager = require('./intelligentConversationManager');
 
 // ============================================================================
 // INITIALIZATION
@@ -27,7 +27,7 @@ const conversationEngine = require('./conversationEngine');
   const loaded = await knowledgeManager.loadAll();
   if (loaded) {
     logger.info('🎓 Knowledge base loaded and ready');
-    logger.info('🤖 Conversation Engine: DETERMINISTIC MODE (No AI dependency)');
+    logger.info('🤖 Intelligent Conversation Manager: NLU + State Management');
   } else {
     logger.error('❌ Failed to load knowledge base');
   }
@@ -94,14 +94,14 @@ const processTextMessage = async (senderId, messageText, timestamp) => {
     }
 
     console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log(`🤖 DETERMINISTIC CONVERSATION ENGINE`);
+    console.log(`🤖 INTELLIGENT CONVERSATION MANAGER`);
     console.log(`📨 User: "${sanitizedText}"`);
     console.log(`👤 User ID: ${senderId}${userName ? ` (${userName})` : ''}`);
-    console.log(`🧠 Mode: Smart Pattern Matching + Context Management`);
+    console.log(`🧠 Mode: NLU + Flexible Entity Extraction + State Management`);
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     
-    // Use new conversation engine
-    const result = await conversationEngine.processMessage(senderId, sanitizedText);
+    // Use intelligent conversation manager
+    const result = await intelligentConversationManager.processMessage(senderId, sanitizedText);
     
     console.log('✅ RESPONSE GENERATED');
     console.log(`   Source: ${result.source}`);
