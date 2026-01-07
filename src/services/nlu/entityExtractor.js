@@ -150,32 +150,44 @@ class EntityExtractor {
    */
   buildQuantityPatterns() {
     return [
-      // Explicit cartons
+      // Explicit cartons with numbers
       { 
         regex: /(\d+)\s*(كرتونه|كرتون|كراتين|carton|box|كرطون)/i,
         extract: (match) => ({ value: match[1], type: 'carton' })
-      },
-      { 
-        regex: /\b(كرتونه|كرتون)\b/i,
-        extract: () => ({ value: '1', type: 'carton' })
       },
       { 
         regex: /كرتونتين|2\s*كرتون/i,
         extract: () => ({ value: '2', type: 'carton' })
       },
       
-      // Pieces
+      // Just "كرتونة" or "كرتون" alone (no number)
+      { 
+        regex: /^(كرتونه|كرتون|carton)$/i,
+        extract: () => ({ value: '1', type: 'carton' })
+      },
+      { 
+        regex: /(كرتونه|كرتون|carton)(?!\s*\d)/i,
+        extract: () => ({ value: '1', type: 'carton' })
+      },
+      
+      // Pieces with numbers
       { 
         regex: /(\d+)\s*(حبه|حبات|قطعه|قطع|piece|unit|pieces)/i,
         extract: (match) => ({ value: match[1], type: 'piece' })
       },
       { 
-        regex: /\b(حبه|قطعه)\b/i,
+        regex: /حبتين|2\s*حبه/i,
+        extract: () => ({ value: '2', type: 'piece' })
+      },
+      
+      // Just "حبة" alone
+      { 
+        regex: /^(حبه|قطعه|piece)$/i,
         extract: () => ({ value: '1', type: 'piece' })
       },
       { 
-        regex: /حبتين|2\s*حبه/i,
-        extract: () => ({ value: '2', type: 'piece' })
+        regex: /(حبه|قطعه|piece)(?!\s*\d)/i,
+        extract: () => ({ value: '1', type: 'piece' })
       },
       
       // Written numbers (context: likely quantity)

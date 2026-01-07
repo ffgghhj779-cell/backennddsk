@@ -16,7 +16,7 @@ const { sanitizeText, isWithinMessagingWindow } = require('../utils/validator');
 const facebookService = require('./facebookService');
 const knowledgeManager = require('./knowledgeManager');
 const contextManager = require('./contextManager');
-const intelligentConversationManager = require('./intelligentConversationManager');
+const smartConversationFlow = require('./smartConversationFlow');
 
 // ============================================================================
 // INITIALIZATION
@@ -27,7 +27,7 @@ const intelligentConversationManager = require('./intelligentConversationManager
   const loaded = await knowledgeManager.loadAll();
   if (loaded) {
     logger.info('🎓 Knowledge base loaded and ready');
-    logger.info('🤖 Intelligent Conversation Manager: NLU + State Management');
+    logger.info('🤖 Smart Conversation Flow: Strict Logic + Context Awareness');
   } else {
     logger.error('❌ Failed to load knowledge base');
   }
@@ -94,17 +94,16 @@ const processTextMessage = async (senderId, messageText, timestamp) => {
     }
 
     console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log(`🤖 INTELLIGENT CONVERSATION MANAGER`);
+    console.log(`🤖 SMART CONVERSATION FLOW`);
     console.log(`📨 User: "${sanitizedText}"`);
     console.log(`👤 User ID: ${senderId}${userName ? ` (${userName})` : ''}`);
-    console.log(`🧠 Mode: NLU + Flexible Entity Extraction + State Management`);
+    console.log(`🧠 Mode: Strict Logic + Context-Aware + Natural Understanding`);
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     
-    // Use intelligent conversation manager
-    const result = await intelligentConversationManager.processMessage(senderId, sanitizedText);
+    // Use smart conversation flow
+    const result = await smartConversationFlow.processMessage(senderId, sanitizedText);
     
     console.log('✅ RESPONSE GENERATED');
-    console.log(`   Source: ${result.source}`);
     console.log(`   Intent: ${result.intent || 'unknown'}`);
     console.log(`   Confidence: ${result.confidence ? (result.confidence * 100).toFixed(1) + '%' : 'N/A'}`);
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
