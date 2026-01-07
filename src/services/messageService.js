@@ -16,8 +16,7 @@ const { sanitizeText, isWithinMessagingWindow } = require('../utils/validator');
 const facebookService = require('./facebookService');
 const knowledgeManager = require('./knowledgeManager');
 const contextManager = require('./contextManager');
-const intelligentResponseEngine = require('./intelligentResponseEngine');
-const smartResponseEngine = require('./smartResponseEngine');
+const conversationEngine = require('./conversationEngine');
 
 // ============================================================================
 // INITIALIZATION
@@ -28,7 +27,7 @@ const smartResponseEngine = require('./smartResponseEngine');
   const loaded = await knowledgeManager.loadAll();
   if (loaded) {
     logger.info('🎓 Knowledge base loaded and ready');
-    logger.info('🤖 AI Mode:', intelligentResponseEngine.isAIEnabled() ? 'ENABLED (OpenAI + Knowledge)' : 'KNOWLEDGE ONLY');
+    logger.info('🤖 Conversation Engine: DETERMINISTIC MODE (No AI dependency)');
   } else {
     logger.error('❌ Failed to load knowledge base');
   }
@@ -94,31 +93,20 @@ const processTextMessage = async (senderId, messageText, timestamp) => {
       }
     }
 
-    // Choose engine based on OpenAI availability
-    const useSmartEngine = !intelligentResponseEngine.isAIEnabled();
-    
     console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log(`🤖 ${useSmartEngine ? 'SMART RESPONSE ENGINE (FREE)' : 'AI RESPONSE ENGINE'}`);
+    console.log(`🤖 DETERMINISTIC CONVERSATION ENGINE`);
     console.log(`📨 User: "${sanitizedText}"`);
     console.log(`👤 User ID: ${senderId}${userName ? ` (${userName})` : ''}`);
-    console.log(`🧠 Mode: ${useSmartEngine ? 'Smart NLP + Pattern Matching' : 'AI + Knowledge'}`);
+    console.log(`🧠 Mode: Smart Pattern Matching + Context Management`);
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     
-    // Use smart engine (free) if no OpenAI key
-    const result = useSmartEngine 
-      ? await smartResponseEngine.processMessage(senderId, sanitizedText)
-      : await intelligentResponseEngine.processMessage(senderId, sanitizedText);
+    // Use new conversation engine
+    const result = await conversationEngine.processMessage(senderId, sanitizedText);
     
     console.log('✅ RESPONSE GENERATED');
     console.log(`   Source: ${result.source}`);
     console.log(`   Intent: ${result.intent || 'unknown'}`);
     console.log(`   Confidence: ${result.confidence ? (result.confidence * 100).toFixed(1) + '%' : 'N/A'}`);
-    if (result.entities && Object.keys(result.entities).length > 0) {
-      console.log(`   Entities: ${JSON.stringify(result.entities)}`);
-    }
-    if (result.tokensUsed) {
-      console.log(`   Tokens Used: ${result.tokensUsed}`);
-    }
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
     
     // Send response to user
