@@ -101,10 +101,16 @@ const processTextMessage = async (senderId, messageText, timestamp) => {
     console.log(`🧠 Mode: Strict Logic + Context-Aware + Natural Understanding`);
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     
-    // Use smart conversation flow
-    // Use new intelligent assistant with AI reasoning
-    logger.info('🤖 Processing with Intelligent AI Assistant', { senderId, message: sanitizedText });
-    const result = await intelligentAssistant.handleMessage(senderId, sanitizedText);
+    // Use smart conversation flow with fallback
+    let result;
+    try {
+      logger.info('🤖 Processing with Intelligent AI Assistant', { senderId, message: sanitizedText });
+      result = await intelligentAssistant.handleMessage(senderId, sanitizedText);
+    } catch (aiError) {
+      logger.error('AI Assistant failed, falling back to smart conversation flow', { error: aiError.message });
+      // Fallback to smart conversation flow
+      result = await smartConversationFlow.processMessage(senderId, sanitizedText);
+    }
     
     console.log('✅ RESPONSE GENERATED');
     console.log(`   Intent: ${result.metadata?.decision?.action || 'unknown'}`);
