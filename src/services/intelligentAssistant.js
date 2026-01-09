@@ -5,16 +5,42 @@
  * to provide intelligent, context-aware responses
  */
 
-const AIReasoningEngine = require('./aiReasoningEngine');
 const contextMemory = require('./contextMemory');
 const knowledgeManager = require('./knowledgeManager');
-const { SYSTEM_PROMPT, getContextualizedPrompt } = require('../config/systemPrompt');
+
+// Lazy load to avoid circular dependencies
+let AIReasoningEngine;
+let systemPrompt;
 
 class IntelligentAssistant {
   constructor() {
-    this.reasoningEngine = new AIReasoningEngine(knowledgeManager, contextMemory);
+    this.reasoningEngine = null;
     this.contextMemory = contextMemory;
     this.knowledge = knowledgeManager;
+    this.initialized = false;
+  }
+
+  /**
+   * Initialize the reasoning engine (lazy loading)
+   */
+  async initialize() {
+    if (this.initialized) return;
+    
+    try {
+      if (!AIReasoningEngine) {
+        AIReasoningEngine = require('./aiReasoningEngine');
+      }
+      if (!systemPrompt) {
+        systemPrompt = require('../config/systemPrompt');
+      }
+      
+      this.reasoningEngine = new AIReasoningEngine(knowledgeManager, contextMemory);
+      this.initialized = true;
+      console.log('✅ Intelligent Assistant initialized');
+    } catch (error) {
+      console.error('❌ Failed to initialize Intelligent Assistant:', error.message);
+      throw error;
+    }
   }
 
   /**
@@ -22,6 +48,11 @@ class IntelligentAssistant {
    */
   async handleMessage(userId, userMessage) {
     try {
+      // Initialize if needed
+      if (!this.initialized) {
+        await this.initialize();
+      }
+
       console.log(`\n🎯 [User ${userId}] Processing: "${userMessage}"`);
       
       // STEP 1: Get conversation context
@@ -115,8 +146,11 @@ class IntelligentAssistant {
    * Get system prompt with conversation context
    */
   getSystemPrompt(userId) {
+    if (!systemPrompt) {
+      systemPrompt = require('../config/systemPrompt');
+    }
     const history = this.contextMemory.getHistory(userId);
-    return getContextualizedPrompt(history);
+    return systemPrompt.getContextualizedPrompt(history);
   }
 
   /**
