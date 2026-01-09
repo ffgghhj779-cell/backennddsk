@@ -1,34 +1,173 @@
 {
   "sales_policy": {
-    "type": "wholesale_only",
+    "type": "wholesale_only_b2b",
     "description": "البيع جملة فقط - لا يوجد بيع قطاعي للأفراد",
+    "description_en": "Wholesale only - NO retail to individuals",
+    "business_model": "B2B exclusively",
     "minimum_order": "حسب المنتج",
+    "minimum_order_en": "Varies by product category",
     "payment_methods": ["نقدي", "تحويل بنكي"],
-    "delivery_available": true
+    "payment_methods_en": ["Cash", "Bank transfer"],
+    "delivery_available": true,
+    "delivery_note": "التوصيل متاح (الشروط تُحدد عند التواصل)",
+    "delivery_note_en": "Delivery available (terms confirmed upon contact)",
+    "target_market": {
+      "ar": ["محلات دهانات", "موزعين", "ورش سيارات", "مقاولين"],
+      "en": ["Paint shops", "Distributors", "Car workshops", "Contractors"]
+    }
   },
   "pricing_policy": {
     "currency": "EGP",
+    "currency_full": "Egyptian Pounds",
     "tax_included_option": true,
     "tax_rate": 0.14,
-    "price_variations": "تختلف الأسعار حسب الكمية",
+    "tax_rate_percent": "14%",
+    "tax_description": "الأسعار متوفرة مع وبدون ضريبة القيمة المضافة",
+    "tax_description_en": "Prices available both with and without VAT",
+    "price_variations": "تختلف الأسعار حسب الكمية المطلوبة",
+    "price_variations_en": "Prices differ based on quantity ordered",
+    "discount_info": {
+      "wholesale_discount": "8% على الكميات الكبيرة",
+      "wholesale_discount_en": "8% on bulk purchases",
+      "quantity_discounts": "خصومات متاحة على الطلبات الكبيرة",
+      "quantity_discounts_en": "Discounts available on large orders"
+    },
     "price_inquiry_requirements": {
       "required_info": ["اسم المنتج", "الحجم", "الكمية"],
-      "description": "لا يتم إعطاء سعر بدون تحديد المنتج والحجم والكمية بشكل دقيق"
+      "required_info_en": ["Product name", "Size", "Quantity"],
+      "description": "لا يتم إعطاء سعر بدون تحديد المنتج والحجم والكمية بشكل دقيق",
+      "description_en": "No prices provided without complete details",
+      "example": "مثال: معجون Top Plus 2.8 كجم، كرتونة",
+      "example_en": "Example: Top Plus Putty 2.8 kg, carton"
+    },
+    "pricing_notes": {
+      "ar": [
+        "جميع الأسعار قابلة للتغيير حسب الكمية",
+        "أسعار الكرتونة تمثل المشتريات بالجملة",
+        "خيارات متاحة شاملة وغير شاملة الضريبة",
+        "الأسعار النهائية تُؤكد عند الاستفسار بالمواصفات الكاملة"
+      ],
+      "en": [
+        "All prices subject to change based on quantity",
+        "Carton prices represent bulk purchases",
+        "Tax-inclusive and tax-exclusive options available",
+        "Final prices confirmed upon inquiry with complete specifications"
+      ]
     }
   },
   "customer_service_policy": {
     "response_time": "فوري خلال ساعات العمل",
-    "language": "العربية",
+    "response_time_en": "Immediate during working hours",
+    "language": "العربية (رئيسي)",
+    "language_en": "Arabic (primary)",
     "tone": "محترف وودود",
+    "tone_en": "Professional and friendly",
     "routing": {
-      "wholesale_inquiries": "قسم الجملة - 01155501111",
-      "spray_booth": "كابينة الرش - 01017782299",
-      "general_inquiries": "خدمة العملاء - 01124400797"
+      "wholesale_inquiries": {
+        "department": "قسم الجملة/التوزيع",
+        "phone": "01155501111",
+        "whatsapp": "+201155501111",
+        "handles": ["طلبات الجملة", "استفسارات الأسعار", "الطلبات الكبيرة", "التوزيع"]
+      },
+      "spray_booth": {
+        "department": "كابينة رش السيارات",
+        "phone": "01144003490",
+        "whatsapp": "+201144003490",
+        "handles": ["خدمات كابينة الرش", "دهان السيارات", "الحجوزات"]
+      },
+      "general_inquiries": {
+        "department": "خدمة العملاء والمحل",
+        "phone": "01124400797",
+        "whatsapp": "+201124400797",
+        "handles": ["استفسارات عامة", "خدمة العملاء", "بيع داخل المحل"]
+      }
+    },
+    "routing_rules": {
+      "price_inquiry": "01155501111",
+      "product_availability": "01155501111",
+      "wholesale_orders": "01155501111",
+      "spray_booth_services": "01144003490",
+      "car_painting": "01144003490",
+      "general_questions": "01124400797",
+      "store_location": "01124400797"
     }
   },
   "restrictions": {
-    "no_retail": "لا يوجد بيع للأفراد",
-    "wholesale_only": "التعامل مع المحلات والموزعين فقط",
-    "no_online_prices": "الأسعار تُذكر عند التواصل المباشر مع التفاصيل الكاملة"
+    "no_retail_to_individuals": {
+      "ar": "لا يوجد بيع قطاعي للأفراد",
+      "en": "No retail sales to individuals",
+      "polite_refusal_template": {
+        "ar": "مرحباً بك! نحن متخصصون في البيع بالجملة فقط للمحلات والموزعين، ولا نبيع للأفراد. يمكنك السؤال في محلات الدهانات القريبة منك.",
+        "en": "Welcome! We specialize in wholesale only for shops and distributors, not retail to individuals. You can inquire at paint shops near you."
+      }
+    },
+    "wholesale_only": {
+      "ar": "التعامل مع المحلات والموزعين والورش والمقاولين فقط",
+      "en": "Dealing with shops, distributors, workshops, and contractors only"
+    },
+    "no_online_prices_without_details": {
+      "ar": "الأسعار تُذكر عند التواصل المباشر مع التفاصيل الكاملة",
+      "en": "Prices provided upon direct contact with complete details"
+    },
+    "store_not_for_distribution": {
+      "ar": "محل العدوي للبيع داخل المحل فقط - غير متاح للتوزيع",
+      "en": "El Adawy Store for in-store sales only - NOT available for distribution"
+    }
+  },
+  "important_policies": {
+    "always_emphasize": {
+      "ar": [
+        "البيع بالجملة فقط - ليس للأفراد",
+        "يجب تحديد: اسم المنتج + الحجم + الكمية للحصول على السعر",
+        "ثلاثة أرقام منفصلة لأقسام مختلفة",
+        "ساعات العمل: 8 صباحاً - 6 مساءً، الجمعة مغلق",
+        "ثلاثة مواقع بأغراض مختلفة"
+      ],
+      "en": [
+        "Wholesale only - NOT for individuals",
+        "Must specify: product name + size + quantity for pricing",
+        "Three separate contact numbers for different departments",
+        "Working hours: 8 AM - 6 PM, Friday closed",
+        "Three locations with different purposes"
+      ]
+    },
+    "escalation_rules": {
+      "auto_escalate_when": [
+        "استفسار سعر بدون مواصفات المنتج",
+        "أسئلة فنية معقدة حول تطبيق المنتجات",
+        "شكاوى أو ملاحظات سلبية",
+        "طلبات خاصة",
+        "عملاء أفراد يطلبون شراء قطاعي"
+      ],
+      "auto_escalate_when_en": [
+        "Price inquiry without product specifications",
+        "Complex technical questions about product applications",
+        "Complaints or negative feedback",
+        "Special order requests",
+        "Individual customers requesting retail purchase"
+      ]
+    }
+  },
+  "conversation_guidelines": {
+    "must_always_do": {
+      "ar": [
+        "التأكيد على سياسة 'الجملة فقط'",
+        "عدم إعطاء أسعار بدون تفاصيل كاملة",
+        "توجيه الاستفسارات للقسم الصحيح",
+        "التعامل بأدب عند رفض عملاء التجزئة",
+        "تقديم معلومات الاتصال الكاملة"
+      ],
+      "en": [
+        "Emphasize 'Wholesale Only' policy",
+        "Never provide prices without complete specifications",
+        "Route inquiries to correct department",
+        "Be polite when declining individual customers",
+        "Provide complete contact information"
+      ]
+    },
+    "conversation_tone": {
+      "ar": "محترف لكن ودود، محترم (استخدام 'أستاذ' أو 'حضرتك')، مفيد (توجيه للقسم الصحيح), واضح (لا غموض حول سياسة الجملة), اللهجة المصرية للشعور الطبيعي، سريع في التوجيه (تقديم أرقام الهواتف)",
+      "en": "Professional yet friendly, Respectful (use formal terms), Helpful (guide to correct department), Clear (no ambiguity about wholesale policy), Egyptian Arabic dialect for natural feel, Quick to action (provide phone numbers)"
+    }
   }
 }

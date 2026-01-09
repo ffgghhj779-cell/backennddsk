@@ -38,10 +38,12 @@
       "name": "استفسار عن منتج",
       "priority": "high",
       "keywords": [
-        "معجون", "فيلر", "برايمر", "ثنر", "سبراي", "دوكو",
+        "معجون", "فيلر", "برايمر", "ثنر", "سبراي", "دوكو", "مصلب", "ورنيش", "سيلر",
         "دهان", "منتج", "منتجات", "عندكم", "متوفر", "موجود", "متوفره",
         "product", "available", "المنتجات اللي موجودة", "المنتجات الموجوده",
-        "ايه اللي عندكم", "عندكم ايه", "putty", "filler", "primer", "thinner", "spray"
+        "ايه اللي عندكم", "عندكم ايه", "putty", "filler", "primer", "thinner", "spray",
+        "hardener", "varnish", "sealer", "دهانات سيارات", "دهانات خشب", "دهانات مباني",
+        "car paints", "wood paints", "building paints"
       ],
       "response_type": "product_info",
       "should_include_catalog": true
@@ -121,18 +123,46 @@
     {
       "id": "general_info",
       "name": "معلومات عامة",
+      "priority": "medium",
+      "keywords": [
+        "معلومات", "تفاصيل", "عن الشركة", "info", "about", "details", "نبذة", "مين انتو", "ايه هي", "رؤية", "vision"
+      ],
+      "response_type": "about_company"
+    },
+    {
+      "id": "brands_inquiry",
+      "name": "استفسار عن العلامات التجارية",
+      "priority": "high",
+      "keywords": [
+        "علامات", "براندات", "brands", "ماركات", "شركات", "وكالات", "agencies", "numix", "glc", "kapci", "national", "ncr", "top plus"
+      ],
+      "response_type": "brands_info",
+      "should_list_all_brands": true
+    },
+    {
+      "id": "testimonials_inquiry",
+      "name": "استفسار عن آراء العملاء",
+      "priority": "medium",
+      "keywords": [
+        "آراء", "تقييمات", "reviews", "testimonials", "عملاء", "customers", "تجارب", "experiences", "رضا"
+      ],
+      "response_type": "testimonials"
+    },
+    {
+      "id": "social_media_inquiry",
+      "name": "استفسار عن وسائل التواصل الاجتماعي",
       "priority": "low",
       "keywords": [
-        "معلومات", "تفاصيل", "عن الشركة", "info", "about", "details"
+        "فيسبوك", "انستجرام", "تيك توك", "لينكد ان", "facebook", "instagram", "tiktok", "linkedin", "social media", "سوشيال ميديا"
       ],
-      "response_type": "company_overview"
+      "response_type": "social_media_info"
     },
     {
       "id": "complaint",
       "name": "شكوى",
       "priority": "urgent",
       "keywords": [
-        "شكوى", "مشكلة", "غلط", "زعلان", "complaint", "problem", "issue"
+        "شكوى", "مشكلة", "غلط", "زعلان", "مش راضي", "complaint", "problem", "issue", "disappointed", "not happy"
       ],
       "response_type": "empathetic_escalation",
       "escalate": true
