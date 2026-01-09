@@ -1,16 +1,39 @@
 {
   "name": "مجموعة العدوي للدهانات",
-  "name_en": "Al-Adawy Paints Group",
+  "name_en": "Al-Adawy Group for Paints",
+  "short_name": "العدوي للدهانات",
+  "short_name_en": "Al-Adawy Paints Group",
   "type": "wholesale_distributor",
-  "description": "مستودع توزيع ووكالات دهانات معتمد",
-  "description_en": "Authorized paint distribution warehouse and agencies",
-  "business_model": "wholesale_only",
+  "legal_type": "distribution_warehouse_and_authorized_agency",
+  "description": "مستودع توزيع ووكيل معتمد لكبرى شركات الدهانات في مصر",
+  "description_en": "Authorized distribution warehouse and agent for major paint companies in Egypt",
+  "business_definition": "مستودع توزيع ووكيل معتمد لكبرى شركات الدهانات في مصر، متخصصة في التوريد بالجملة للدهانات ومستلزماتها لمحلات الدهانات والموزعين والورش وشركات المقاولات",
+  "business_definition_en": "Al-Adawy Group for Paints is an authorized distribution warehouse and agent for major paint companies in Egypt, specializing in wholesale supply of paints and their requirements for paint shops, distributors, workshops, and contracting companies",
+  "tagline": "خبرة وثقة في توزيع جميع أنواع الدهانات",
+  "tagline_en": "Expertise and trust in distributing all types of paints",
+  "business_model": "wholesale_only_b2b",
   "established": "2020",
   "specialization": [
-    "دهانات سيارات",
+    "دهانات سيارات (متوفر الآن)",
     "دهانات مباني (قريباً)",
     "دهانات خشب (قريباً)",
     "كيماويات (قريباً)"
+  ],
+  "vision": {
+    "ar": "أن نكون الشريك الموثوق في توريد جميع أنواع الدهانات من خلال تقديم منتجات معتمدة وأسعار تنافسية وخدمة سريعة تلبي احتياجات السوق المصري",
+    "en": "To be the trusted partner in supplying all types of paints by providing certified products, competitive prices, and fast service that meets the needs of the Egyptian market"
+  },
+  "core_values": [
+    "الجودة",
+    "أسعار الجملة",
+    "الموثوقية",
+    "التوصيل السريع"
+  ],
+  "core_values_en": [
+    "Quality",
+    "Wholesale Pricing",
+    "Reliability",
+    "Fast Delivery"
   ],
   "target_customers": [
     "محلات دهانات",
@@ -18,11 +41,93 @@
     "ورش سيارات",
     "مقاولين"
   ],
+  "target_customers_en": [
+    "Paint Shops",
+    "Distributors",
+    "Car Workshops",
+    "Contractors"
+  ],
   "unique_selling_points": [
     "أسعار جملة تنافسية",
     "منتجات عالية الجودة",
     "توصيل سريع",
     "خدمة عملاء ممتازة",
     "كابينة رش سيارات احترافية"
-  ]
+  ],
+  "unique_selling_points_en": [
+    "Competitive wholesale prices",
+    "High-quality products",
+    "Fast delivery",
+    "Excellent customer service",
+    "Professional car spray booth"
+  ],
+  "why_choose_us": {
+    "ar": [
+      "مستودع توزيع معتمد",
+      "وكلاء لكبرى شركات الدهانات",
+      "التوريد بالجملة فقط (للتجار والموزعين)",
+      "تنوع واسع في المواد والأنواع",
+      "الالتزام بالمواعيد واستقرار التوريد"
+    ],
+    "en": [
+      "Authorized distribution warehouse",
+      "Agents for major paint companies",
+      "Wholesale supply only (for traders and distributors)",
+      "Wide variety of materials and types",
+      "Commitment to deadlines and supply stability"
+    ]
+  },
+  "partner_brands": [
+    "National Paints",
+    "Pachin",
+    "Penta",
+    "SCIB Paints",
+    "Swift",
+    "Mido",
+    "Idawy",
+    "UBMC",
+    "GLC",
+    "Airlac",
+    "CAPCI/Kabsy",
+    "El Gamal",
+    "Elmohandes",
+    "Mobelc",
+    "Modern Building Chemicals",
+    "SCIB Modern",
+    "Refinix"
+  ],
+  "partner_brands_ar": [
+    "ناشونال",
+    "باشين",
+    "بنتا",
+    "SCIB",
+    "سويفت",
+    "ميدو",
+    "العداوي",
+    "UBMC",
+    "جي ال سي",
+    "ايرلاك",
+    "كابسي",
+    "الجمال",
+    "المهندس",
+    "موبلك",
+    "شركة كيمويات البناء الحديث",
+    "SCIB مودرن",
+    "ريفينكس"
+  ],
+  "customer_statistics": {
+    "customer_base": "200+ workshops and contractors",
+    "satisfaction_rate": "98%",
+    "total_reviews": "500+"
+  },
+  "contact": {
+    "email": "AlAdawiPaintsGroup@gmail.com",
+    "website": "https://ladawy-foundation.web.app",
+    "social_media": {
+      "tiktok": "https://www.tiktok.com/@aladawipaintsgroup?_r=1&_t=ZS-92n7tIHE1tS",
+      "facebook": "https://www.facebook.com/share/1FzDn8xSo9/",
+      "instagram": "https://www.instagram.com/aladawipaintsgroup?igsh=MW5xMHNyNnYwbG5xaw==",
+      "linkedin": "https://www.linkedin.com/in/aladawipaintsgroup-group-2511013a3"
+    }
+  }
 }

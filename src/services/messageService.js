@@ -17,6 +17,7 @@ const facebookService = require('./facebookService');
 const knowledgeManager = require('./knowledgeManager');
 const contextManager = require('./contextManager');
 const smartConversationFlow = require('./smartConversationFlow');
+const intelligentAssistant = require('./intelligentAssistant');
 
 // ============================================================================
 // INITIALIZATION
@@ -101,15 +102,34 @@ const processTextMessage = async (senderId, messageText, timestamp) => {
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     
     // Use smart conversation flow
-    const result = await smartConversationFlow.processMessage(senderId, sanitizedText);
+    // Use new intelligent assistant with AI reasoning
+    logger.info('🤖 Processing with Intelligent AI Assistant', { senderId, message: sanitizedText });
+    const result = await intelligentAssistant.handleMessage(senderId, sanitizedText);
     
     console.log('✅ RESPONSE GENERATED');
-    console.log(`   Intent: ${result.intent || 'unknown'}`);
-    console.log(`   Confidence: ${result.confidence ? (result.confidence * 100).toFixed(1) + '%' : 'N/A'}`);
+    console.log(`   Intent: ${result.metadata?.decision?.action || 'unknown'}`);
+    console.log(`   Customer Type: ${result.metadata?.analysis?.customer_type || 'unknown'}`);
+    console.log(`   Quality Passed: ${result.metadata?.quality_passed ? '✅' : '⚠️'}`);
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
     
     // Send response to user
-    await facebookService.sendTextMessage(senderId, result.response);
+    if (result.success) {
+      await facebookService.sendTextMessage(senderId, result.response);
+      
+      // Log AI reasoning for analytics
+      if (result.metadata) {
+        logger.info('🧠 AI Reasoning:', {
+          intents: result.metadata.analysis?.detected_intents,
+          customer_type: result.metadata.analysis?.customer_type,
+          action: result.metadata.decision?.action,
+          department: result.metadata.decision?.department,
+          quality_passed: result.metadata.quality_passed
+        });
+      }
+    } else {
+      // Fallback if AI fails
+      await facebookService.sendTextMessage(senderId, result.response || 'حصل خطأ. من فضلك حاول مرة تانية أو تواصل معنا: 01124400797');
+    }
     
     logger.info('✓ Response sent', { 
       senderId,

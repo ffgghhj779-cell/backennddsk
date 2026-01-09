@@ -1,0 +1,510 @@
+{
+  "catalog_version": "2.0",
+  "last_updated": "2026-01-10",
+  "categories": [
+    {
+      "id": "car_paints",
+      "name": "دهانات سيارات",
+      "name_en": "Car Paints",
+      "status": "available",
+      "description": "توريد بالجملة – خامات ورش – أنظمة ألوان",
+      "description_en": "Wholesale supply – workshop materials – color systems",
+      "subcategories": [
+        {
+          "id": "putty",
+          "name": "معجون",
+          "name_en": "Putty",
+          "description": "معجون لتسوية وإصلاح سطح السيارة قبل الدهان",
+          "products": [
+            {
+              "id": "numix_putty_28kg",
+              "name": "معجون نيوميكس (NUMIX) ستوك أصفر وجديد",
+              "name_en": "Numix New & Yellow Stock Putty",
+              "brand": "NUMIX",
+              "size": "2.8 kg",
+              "available": true
+            },
+            {
+              "id": "top_plus_putty_28kg",
+              "name": "معجون توب بلس (Top Plus) ستوك",
+              "name_en": "Top Plus Stock Putty",
+              "brand": "Top Plus",
+              "sizes": ["2.8 kg", "1 kg", "0.5 kg"],
+              "available": true
+            },
+            {
+              "id": "grey_top_plus",
+              "name": "جراي توب بلس (Grey Top Plus)",
+              "name_en": "Grey Top Plus",
+              "brand": "Top Plus",
+              "sizes": ["1 kg", "0.5 kg"],
+              "color": "رمادي",
+              "available": true
+            },
+            {
+              "id": "nc_duco_putty",
+              "name": "معجون NC دوكو",
+              "name_en": "NC Duco Putty",
+              "brand": "NC Duco",
+              "sizes": ["5 kg جالون", "1 kg"],
+              "available": true
+            },
+            {
+              "id": "jordanian_duco",
+              "name": "معجون دوكو أردني أبيض/رمادي",
+              "name_en": "Jordanian Duco Putty - White/Grey",
+              "brand": "أردني",
+              "size": "5 kg",
+              "colors": ["أبيض", "رمادي"],
+              "available": true
+            },
+            {
+              "id": "jordanian_rough",
+              "name": "معجون أردني خشن",
+              "name_en": "Jordanian Rough Putty",
+              "brand": "أردني",
+              "size": "1 kg",
+              "available": true
+            },
+            {
+              "id": "jordanian_fiberglass",
+              "name": "فيبر جلاس ناعم أردني",
+              "name_en": "Jordanian Smooth Fiberglass Putty",
+              "brand": "أردني",
+              "size": "1 kg",
+              "available": true
+            },
+            {
+              "id": "egyptian_smooth_rough",
+              "name": "معجون مصري ناعم وخشن",
+              "name_en": "Egyptian Smooth & Rough Putty",
+              "brand": "مصري",
+              "size": "1 kg",
+              "types": ["ناعم", "خشن"],
+              "available": true
+            }
+          ]
+        },
+        {
+          "id": "filler",
+          "name": "فيلر",
+          "name_en": "Filler",
+          "description": "طبقة تحضيرية قبل الدهان النهائي",
+          "products": [
+            {
+              "id": "top_plus_k2_slow_grey_green",
+              "name": "توب بلس فيلر بطئ K2 رمادي أخضر",
+              "name_en": "Top Plus Slow Filler K2 Grey Green",
+              "brand": "Top Plus",
+              "type": "K2 بطئ",
+              "size": "1 L",
+              "color": "رمادي أخضر",
+              "available": true
+            },
+            {
+              "id": "top_plus_k2_slow_green",
+              "name": "توب فيلر بطئ K2 أخضر",
+              "name_en": "Top Slow Filler K2 Green",
+              "brand": "Top Plus",
+              "type": "K2 بطئ",
+              "size": "1 L",
+              "color": "أخضر",
+              "available": true
+            },
+            {
+              "id": "top_plus_k1_fast_grey",
+              "name": "توب بلس K1 سريع رمادي",
+              "name_en": "Top Plus Fast K1 Grey",
+              "brand": "Top Plus",
+              "type": "K1 سريع",
+              "size": "1 L",
+              "color": "رمادي",
+              "available": true
+            },
+            {
+              "id": "top_plus_hardener",
+              "name": "مصلب توب بلس",
+              "name_en": "Top Plus Hardener",
+              "brand": "Top Plus",
+              "size": "250 ml",
+              "available": true
+            },
+            {
+              "id": "import_filler_k2_dark_grey",
+              "name": "فيلر استيراد بطئ K2 رمادي غامق 7001",
+              "name_en": "Import Filler Slow K2 Dark Grey 7001",
+              "brand": "استيراد",
+              "type": "K2 بطئ",
+              "size": "1 L",
+              "color": "رمادي غامق 7001",
+              "available": true
+            },
+            {
+              "id": "import_filler_k2_green",
+              "name": "فيلر استيراد بطئ K2 أخضر 7030",
+              "name_en": "Import Filler Slow K2 Green 7030",
+              "brand": "استيراد",
+              "type": "K2 بطئ",
+              "size": "1 L",
+              "color": "أخضر 7030",
+              "available": true
+            },
+            {
+              "id": "import_filler_k2_light_grey",
+              "name": "فيلر استيراد بطئ K2 رمادي فاتح",
+              "name_en": "Import Filler Slow K2 Light Grey",
+              "brand": "استيراد",
+              "type": "K2 بطئ",
+              "size": "1 L",
+              "color": "رمادي فاتح",
+              "available": true
+            },
+            {
+              "id": "import_filler_hardener",
+              "name": "مصلب فيلر استيراد",
+              "name_en": "Import Filler Hardener",
+              "brand": "استيراد",
+              "size": "250 ml",
+              "available": true
+            },
+            {
+              "id": "import_easy_sanding_primer",
+              "name": "برايمر سهل الصنفرة مع مصلب",
+              "name_en": "Import Easy Sanding Primer with Hardener",
+              "brand": "استيراد",
+              "size": "1.5 L",
+              "available": true
+            }
+          ]
+        },
+        {
+          "id": "primer",
+          "name": "برايمر",
+          "name_en": "Primer",
+          "description": "طبقة أساس لحماية وتحضير السطح",
+          "products": [
+            {
+              "id": "ncr_primer_white_k1",
+              "name": "برايمر NCR أبيض K1 سريع",
+              "name_en": "NCR White K1 Fast Primer",
+              "brand": "NCR",
+              "type": "K1 سريع",
+              "color": "أبيض",
+              "sizes": ["جالون 4 kg", "1.5 L", "جردل 24 kg"],
+              "available": true
+            },
+            {
+              "id": "ncr_primer_grey_k1",
+              "name": "برايمر NCR رمادي K1 سريع",
+              "name_en": "NCR Grey K1 Fast Primer",
+              "brand": "NCR",
+              "type": "K1 سريع",
+              "color": "رمادي",
+              "sizes": ["جالون 4 kg", "1.5 L", "جردل 24 kg"],
+              "available": true
+            },
+            {
+              "id": "ncr_primer_grey_green_k2",
+              "name": "برايمر NCR رمادي-أخضر K2 بطئ",
+              "name_en": "NCR Grey-Green K2 Slow Primer",
+              "brand": "NCR",
+              "type": "K2 بطئ",
+              "color": "رمادي-أخضر",
+              "size": "1.6 L",
+              "available": true
+            },
+            {
+              "id": "ncr_hardener",
+              "name": "مصلب NCR",
+              "name_en": "NCR Hardener",
+              "brand": "NCR",
+              "size": "300 g",
+              "available": true
+            }
+          ]
+        },
+        {
+          "id": "thinner",
+          "name": "ثنر",
+          "name_en": "Thinner",
+          "description": "مذيب لتخفيف الدهانات",
+          "products": [
+            {
+              "id": "numix_121",
+              "name": "ثنر نيوميكس 121 متعدد الأغراض",
+              "name_en": "NUMIX Multi-Purpose Thinner 121",
+              "brand": "NUMIX",
+              "type": "121 متعدد الأغراض",
+              "sizes": ["1 L", "3 L", "جالون 5 L", "برميل 167 kg"],
+              "available": true
+            },
+            {
+              "id": "numix_202",
+              "name": "ثنر نيوميكس 202 فرن سريع",
+              "name_en": "NUMIX Fast Oven Thinner 202",
+              "brand": "NUMIX",
+              "type": "202 فرن سريع",
+              "sizes": ["1 L", "0.5 L", "أردني 1 L", "أردني 0.5 L"],
+              "available": true
+            },
+            {
+              "id": "numix_204",
+              "name": "ثنر نيوميكس 204 فرن بطئ",
+              "name_en": "NUMIX Slow Oven Thinner 204",
+              "brand": "NUMIX",
+              "type": "204 فرن بطئ",
+              "sizes": ["1 L", "0.5 L", "جالون 5 L", "أردني 1 L", "أردني 0.5 L"],
+              "available": true
+            },
+            {
+              "id": "numix_206",
+              "name": "ثنر نيوميكس 206 فرن بطئ اكسترا",
+              "name_en": "NUMIX Slow Oven Extra Thinner 206",
+              "brand": "NUMIX",
+              "type": "206 فرن بطئ اكسترا",
+              "sizes": ["1 L مصري", "1 L أردني"],
+              "available": true
+            },
+            {
+              "id": "numix_repair",
+              "name": "ثنر نيوميكس إصلاح",
+              "name_en": "NUMIX Repair Thinner",
+              "brand": "NUMIX",
+              "type": "إصلاح",
+              "size": "1 L",
+              "available": true
+            },
+            {
+              "id": "numix_cleaning",
+              "name": "ثنر نيوميكس تنظيف",
+              "name_en": "NUMIX Cleaning Thinner",
+              "brand": "NUMIX",
+              "type": "تنظيف",
+              "size": "1 L",
+              "available": true
+            },
+            {
+              "id": "national_thinner",
+              "name": "ثنر ناشونال S.G",
+              "name_en": "National Thinner S.G",
+              "brand": "National",
+              "size": "2.35 kg",
+              "available": true
+            },
+            {
+              "id": "ncr_acrylic_thinner",
+              "name": "ثنر NCR أكريلك فرن",
+              "name_en": "NCR Acrylic Oven Thinner",
+              "brand": "NCR",
+              "type": "أكريلك فرن",
+              "sizes": ["0.5 L", "1 L", "جركن 5 L"],
+              "available": true
+            },
+            {
+              "id": "kp_plus_21",
+              "name": "ثنر K.P PLUS 21",
+              "name_en": "K.P PLUS Thinner 21",
+              "brand": "K.P PLUS",
+              "type": "21",
+              "sizes": ["1 L", "2.5 L", "4 L", "جالون 5 L"],
+              "available": true
+            },
+            {
+              "id": "kp_plus_100",
+              "name": "ثنر K.P PLUS 100",
+              "name_en": "K.P PLUS Thinner 100",
+              "brand": "K.P PLUS",
+              "type": "100",
+              "size": "1 L",
+              "available": true
+            },
+            {
+              "id": "kp_plus_450",
+              "name": "ثنر K.P PLUS 450",
+              "name_en": "K.P PLUS Thinner 450",
+              "brand": "K.P PLUS",
+              "type": "450",
+              "sizes": ["1 L", "جالون 5 L"],
+              "available": true
+            }
+          ]
+        },
+        {
+          "id": "spray_paint",
+          "name": "سبراي",
+          "name_en": "Spray Paint",
+          "description": "دهان سبراي جاهز للاستخدام - جميع الألوان متوفرة",
+          "products": [
+            {
+              "id": "spray_all_colors",
+              "name": "سبراي جميع الألوان",
+              "name_en": "Spray Paint - All Colors",
+              "size": "250 g",
+              "colors": "جميع الألوان متوفرة",
+              "types": ["برايمر", "ألوان إماراتي", "ميتاليك", "بيرل", "وأكثر"],
+              "available": true
+            }
+          ]
+        },
+        {
+          "id": "duco",
+          "name": "دوكو",
+          "name_en": "Duco",
+          "description": "دهان نهائي للسيارات",
+          "products": [
+            {
+              "id": "nc_duco",
+              "name": "دوكو NC",
+              "name_en": "NC Duco",
+              "brand": "NC Duco",
+              "sizes": ["1 kg", "5 kg"],
+              "available": true
+            },
+            {
+              "id": "jordanian_duco",
+              "name": "دوكو أردني",
+              "name_en": "Jordanian Duco",
+              "brand": "أردني",
+              "sizes": ["1 kg", "5 kg"],
+              "available": true
+            }
+          ]
+        },
+        {
+          "id": "auxiliary_materials",
+          "name": "مواد مساعدة للورش",
+          "name_en": "Workshop Auxiliary Materials",
+          "description": "أدوات ومواد مساعدة لورش الدهان",
+          "products": [
+            {
+              "id": "paint_remover",
+              "name": "مزيل دهان",
+              "name_en": "Paint Remover",
+              "size": "0.8 L",
+              "available": true
+            },
+            {
+              "id": "anti_silicone",
+              "name": "أنتي سليكون",
+              "name_en": "Anti-Silicone",
+              "sizes": ["1 L", "0.5 L"],
+              "available": true
+            },
+            {
+              "id": "bumper_isolator",
+              "name": "عازل مصد",
+              "name_en": "Bumper Isolator",
+              "types": ["أبيض وفضي", "شفاف"],
+              "size": "1 L",
+              "available": true
+            },
+            {
+              "id": "undercoat_water",
+              "name": "أندركوت ماء",
+              "name_en": "Undercoat Water",
+              "colors": ["رمادي", "أسود", "بيج"],
+              "size": "1.35 g",
+              "available": true
+            },
+            {
+              "id": "goma_paste",
+              "name": "جوما بيست رمادي",
+              "name_en": "Goma Paste Grey",
+              "color": "رمادي",
+              "size": "1 kg",
+              "available": true
+            },
+            {
+              "id": "rust_remover",
+              "name": "مزيل صدأ NP-40",
+              "name_en": "Rust Remover NP-40",
+              "size": "200 ml",
+              "available": true
+            },
+            {
+              "id": "carburetor_cleaner",
+              "name": "منظف كاربراتير",
+              "name_en": "Carburetor Cleaner",
+              "size": "400 ml",
+              "available": true
+            },
+            {
+              "id": "marble_adhesive",
+              "name": "لاصق رخام",
+              "name_en": "Marble Adhesive",
+              "sizes": ["0.5 kg", "1 kg", "جالون", "جردل"],
+              "available": true
+            },
+            {
+              "id": "car_tape",
+              "name": "شريط سيارات نيوميكس دوكو بني",
+              "name_en": "Car Tape Numix Duco Brown",
+              "brand": "NUMIX",
+              "color": "بني",
+              "size": "لفة 55 ياردة",
+              "available": true
+            },
+            {
+              "id": "acrylic_putty_silicone",
+              "name": "معجون سليكون أكريلك",
+              "name_en": "Acrylic Putty Silicone",
+              "size": "أنبوب 400 ml",
+              "available": true
+            },
+            {
+              "id": "sandpaper_roll",
+              "name": "لفة سنفرة",
+              "name_en": "Sandpaper Roll",
+              "size": "50 m",
+              "grades": ["80", "100", "120"],
+              "available": true
+            },
+            {
+              "id": "sandpaper_sheets",
+              "name": "ورق سنفرة",
+              "name_en": "Sandpaper Sheets",
+              "type": "فردي",
+              "grades": ["80", "100", "120", "180", "220", "240", "320", "360", "400", "500", "600", "800", "1000", "1200", "1500", "2000"],
+              "available": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "building_paints",
+      "name": "دهانات مباني",
+      "name_en": "Building Paints",
+      "status": "coming_soon",
+      "description": "بلاستيك – معاجين – سيلر – ورنيش",
+      "description_en": "Plastic – putties – sealers – varnishes",
+      "expected": "قريباً",
+      "note": "منتجات GLC متوفرة - اتصل للاستفسار"
+    },
+    {
+      "id": "wood_paints",
+      "name": "دهانات خشب",
+      "name_en": "Wood Paints",
+      "status": "coming_soon",
+      "description": "سيلر – ورنيش – بولي يوريثان – دهانات",
+      "description_en": "Sealers – varnishes – polyurethane – stains",
+      "expected": "قريباً",
+      "note": "منتجات GLC متوفرة - اتصل للاستفسار"
+    },
+    {
+      "id": "chemicals",
+      "name": "كيماويات",
+      "name_en": "Chemicals",
+      "status": "coming_soon",
+      "description": "ثنر – مصلبات – إضافات",
+      "description_en": "Thinner – hardeners – additives",
+      "expected": "قريباً"
+    }
+  ],
+  "brands": {
+    "car_paints": ["NUMIX", "Top Plus", "NC Duco", "NCR", "National", "K.P PLUS", "أردني", "استيراد"],
+    "wood_paints": ["GLC", "Icon"],
+    "building_paints": ["GLC"]
+  },
+  "product_info_note": "جميع المنتجات متوفرة بالجملة فقط. للاستفسار عن الأسعار، يرجى تحديد اسم المنتج والحجم والكمية المطلوبة والاتصال بقسم الجملة: 01155501111"
+}

@@ -2,67 +2,143 @@
   "working_hours": {
     "regular_days": {
       "days": ["السبت", "الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس"],
-      "hours": "8:00 صباحاً - 6:00 مساءً",
+      "days_en": ["Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday"],
+      "hours": "من 8 صباحاً حتى 6 مساءً",
+      "hours_en": "8 AM – 6 PM",
       "hours_24": "08:00 - 18:00"
     },
     "closed": {
       "days": ["الجمعة"],
-      "reason": "إجازة رسمية"
+      "days_en": ["Friday"],
+      "reason": "إجازة رسمية",
+      "reason_en": "Official holiday"
     },
-    "special_notes": "نعمل يومياً ما عدا الجمعة"
+    "special_notes": "نعمل يومياً ما عدا الجمعة",
+    "special_notes_en": "Open daily except Friday"
   },
   "locations": [
     {
       "id": "main_office",
       "name": "المكتب الرئيسي",
+      "name_en": "Main Office",
       "type": "headquarters",
       "address": "شارع عبد الله رفاعي - شارع أحمد جاد - خلف الكنيسة",
+      "address_en": "Abdullah Rafai Street – Ahmed Gad Street – Behind the Church",
       "city": "غير محدد",
+      "city_en": "Not specified",
       "services": ["إدارة", "مبيعات جملة", "خدمة عملاء"],
+      "services_en": ["Management", "Wholesale sales", "Customer service"],
       "contact": {
         "phone": "01155501111",
-        "whatsapp": "201155501111"
-      }
+        "whatsapp": "+201155501111",
+        "display_phone": "+20 115 550 1111"
+      },
+      "purpose": "المكتب الرئيسي وعمليات الجملة",
+      "purpose_en": "Main office and wholesale operations"
     },
     {
       "id": "retail_location",
-      "name": "المحل (بيع داخل المحل فقط)",
+      "name": "محل العدوي",
+      "name_full": "محل العدوي (بيع داخل المحل فقط)",
+      "name_en": "El Adawy Store",
+      "name_full_en": "El Adawy Store (In-Store Sales Only)",
       "type": "retail_showroom",
       "address": "محطة أبو رجيلة - مؤسسة الزكاة",
-      "services": ["عرض منتجات", "بيع مباشر"],
+      "address_en": "Abu Ragila Station – Al-Zakat Foundation",
+      "services": ["عرض منتجات", "بيع مباشر داخل المحل فقط"],
+      "services_en": ["Product display", "Direct in-store sales only"],
       "contact": {
-        "phone": "01124400797"
-      }
+        "phone": "01124400797",
+        "whatsapp": "+201124400797",
+        "display_phone": "+20 112 440 0797"
+      },
+      "purpose": "عرض المنتجات والبيع المباشر داخل المحل فقط",
+      "purpose_en": "Product display and in-store sales only",
+      "important_note": "غير متاح للتوزيع/الجملة",
+      "important_note_en": "NOT available for distribution/wholesale"
     },
     {
       "id": "spray_booth",
       "name": "كابينة رش السيارات",
+      "name_en": "Car Spray Booth",
       "type": "service_center",
       "address": "محطة أبو رجيلة - مؤسسة الزكاة",
-      "services": ["رش سيارات احترافي", "دهان سيارات"],
+      "address_en": "Abu Ragila Station – Al-Zakat Foundation",
+      "short_location": "أبو رجيلة",
+      "short_location_en": "Abu Ragila",
+      "services": ["رش سيارات احترافي", "دهان سيارات", "مطابقة الألوان", "إصلاح", "تلميع"],
+      "services_en": ["Professional car painting", "Car spray booth services", "Color matching", "Repair", "Polishing"],
       "contact": {
-        "phone": "01017782299",
-        "whatsapp": "201017782299"
-      }
+        "phone": "01144003490",
+        "whatsapp": "+201144003490",
+        "display_phone": "+20 114 400 3490"
+      },
+      "purpose": "خدمات دهان ورش السيارات الاحترافية",
+      "purpose_en": "Professional car painting and spray booth services",
+      "note": "تم التحديث من 01017782299 إلى 01144003490"
     }
   ],
+  "location_notes": {
+    "ar": [
+      "المحل وكابينة الرش يتشاركان نفس الموقع (محطة أبو رجيلة)",
+      "المكتب الرئيسي في موقع مختلف (شارع عبد الله رفاعي)",
+      "المدينة/المحافظة غير مذكورة صراحة (يُرجّح منطقة القاهرة)"
+    ],
+    "en": [
+      "Store and Spray Booth share the same location (Abu Ragila Station)",
+      "Main office is at a different location (Abdullah Rafai Street)",
+      "City/Governorate not explicitly mentioned (likely Cairo region)"
+    ]
+  },
   "contact_directory": {
     "wholesale_department": {
-      "name": "قسم الجملة",
+      "name": "قسم التوزيع/الجملة",
+      "name_en": "Distribution/Wholesale Department",
       "phone": "01155501111",
-      "whatsapp": "201155501111",
-      "purpose": "استفسارات الأسعار والطلبات الكبيرة"
+      "whatsapp": "+201155501111",
+      "display_phone": "+20 115 550 1111",
+      "purpose": "طلبات الجملة، استفسارات التوزيع، التسعير، الطلبات الكبيرة",
+      "purpose_en": "Wholesale orders, distribution inquiries, pricing, large orders"
     },
     "spray_booth": {
       "name": "كابينة رش السيارات",
-      "phone": "01017782299",
-      "whatsapp": "201017782299",
-      "purpose": "خدمات رش ودهان السيارات"
+      "name_en": "Car Spray Booth",
+      "phone": "01144003490",
+      "whatsapp": "+201144003490",
+      "display_phone": "+20 114 400 3490",
+      "purpose": "خدمات كابينة الرش، حجوزات دهان السيارات",
+      "purpose_en": "Spray booth services, car painting bookings"
     },
     "customer_service": {
-      "name": "خدمة العملاء والمحل",
+      "name": "محل العدوي",
+      "name_full": "خدمة العملاء والمحل",
+      "name_en": "El Adawy Store",
       "phone": "01124400797",
-      "purpose": "استفسارات عامة وخدمة العملاء"
+      "whatsapp": "+201124400797",
+      "display_phone": "+20 112 440 0797",
+      "purpose": "بيع داخل المحل فقط، استفسارات عامة، خدمة العملاء",
+      "purpose_en": "In-store sales only, general inquiries, customer service",
+      "note": "ليس للتوزيع",
+      "note_en": "NOT for distribution"
+    }
+  },
+  "email": "AlAdawiPaintsGroup@gmail.com",
+  "website": "https://ladawy-foundation.web.app",
+  "social_media": {
+    "tiktok": {
+      "url": "https://www.tiktok.com/@aladawipaintsgroup?_r=1&_t=ZS-92n7tIHE1tS",
+      "handle": "@aladawipaintsgroup"
+    },
+    "facebook": {
+      "url": "https://www.facebook.com/share/1FzDn8xSo9/"
+    },
+    "instagram": {
+      "url": "https://www.instagram.com/aladawipaintsgroup?igsh=MW5xMHNyNnYwbG5xaw==",
+      "handle": "@aladawipaintsgroup"
+    },
+    "linkedin": {
+      "url": "https://www.linkedin.com/in/aladawipaintsgroup-group-2511013a3",
+      "profile": "aladawipaintsgroup-group-2511013a3"
     }
   }
 }
