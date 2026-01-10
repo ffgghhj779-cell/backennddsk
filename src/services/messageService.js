@@ -17,7 +17,8 @@ const facebookService = require('./facebookService');
 const knowledgeManager = require('./knowledgeManager');
 const contextManager = require('./contextManager');
 const smartConversationFlow = require('./smartConversationFlow');
-const intelligentAssistant = require('./intelligentAssistant');
+// Temporarily disable intelligentAssistant to fix errors
+// const intelligentAssistant = require('./intelligentAssistant');
 
 // ============================================================================
 // INITIALIZATION
@@ -101,16 +102,9 @@ const processTextMessage = async (senderId, messageText, timestamp) => {
     console.log(`🧠 Mode: Strict Logic + Context-Aware + Natural Understanding`);
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     
-    // Use smart conversation flow with fallback
-    let result;
-    try {
-      logger.info('🤖 Processing with Intelligent AI Assistant', { senderId, message: sanitizedText });
-      result = await intelligentAssistant.handleMessage(senderId, sanitizedText);
-    } catch (aiError) {
-      logger.error('AI Assistant failed, falling back to smart conversation flow', { error: aiError.message });
-      // Fallback to smart conversation flow
-      result = await smartConversationFlow.processMessage(senderId, sanitizedText);
-    }
+    // Use smart conversation flow (AI assistant temporarily disabled for stability)
+    logger.info('🤖 Processing message with smart conversation flow', { senderId, message: sanitizedText });
+    const result = await smartConversationFlow.processMessage(senderId, sanitizedText);
     
     console.log('✅ RESPONSE GENERATED');
     console.log(`   Intent: ${result.metadata?.decision?.action || 'unknown'}`);
