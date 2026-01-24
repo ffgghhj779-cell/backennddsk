@@ -16,9 +16,10 @@ const { sanitizeText, isWithinMessagingWindow } = require('../utils/validator');
 const facebookService = require('./facebookService');
 const knowledgeManager = require('./knowledgeManager');
 const contextManager = require('./contextManager');
+// UPGRADED: Using new intelligent conversation engine
+const intelligentConversationEngine = require('./intelligentConversationEngine');
+// Legacy systems (kept for fallback)
 const smartConversationFlow = require('./smartConversationFlow');
-// Temporarily disable intelligentAssistant to fix errors
-// const intelligentAssistant = require('./intelligentAssistant');
 
 // ============================================================================
 // INITIALIZATION
@@ -96,47 +97,54 @@ const processTextMessage = async (senderId, messageText, timestamp) => {
     }
 
     console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log(`🤖 SMART CONVERSATION FLOW`);
+    console.log(`🧠 INTELLIGENT CONVERSATION ENGINE v2.0`);
     console.log(`📨 User: "${sanitizedText}"`);
     console.log(`👤 User ID: ${senderId}${userName ? ` (${userName})` : ''}`);
-    console.log(`🧠 Mode: Strict Logic + Context-Aware + Natural Understanding`);
+    console.log(`🎯 Mode: Fuzzy Matching + Context Memory + Smart Responses`);
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     
-    // Use smart conversation flow (AI assistant temporarily disabled for stability)
-    logger.info('🤖 Processing message with smart conversation flow', { senderId, message: sanitizedText });
-    const result = await smartConversationFlow.processMessage(senderId, sanitizedText);
-    
-    console.log('✅ RESPONSE GENERATED');
-    console.log(`   Intent: ${result.metadata?.decision?.action || 'unknown'}`);
-    console.log(`   Customer Type: ${result.metadata?.analysis?.customer_type || 'unknown'}`);
-    console.log(`   Quality Passed: ${result.metadata?.quality_passed ? '✅' : '⚠️'}`);
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+    // Use new intelligent conversation engine
+    let result;
+    try {
+      result = await intelligentConversationEngine.processMessage(senderId, sanitizedText);
+      
+      console.log('✅ RESPONSE GENERATED');
+      console.log(`   Intent: ${result.intent || 'unknown'}`);
+      console.log(`   Confidence: ${result.confidence ? (result.confidence * 100).toFixed(1) + '%' : 'N/A'}`);
+      console.log(`   Escalate: ${result.escalate ? '⚠️ YES' : 'No'}`);
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+      
+    } catch (engineError) {
+      // Fallback to legacy system if new engine fails
+      logger.warn('Intelligent engine error, falling back to legacy', { error: engineError.message });
+      console.log('⚠️ Falling back to legacy system...');
+      result = await smartConversationFlow.processMessage(senderId, sanitizedText);
+      result = {
+        response: result.response,
+        intent: result.metadata?.decision?.action || 'unknown',
+        confidence: 0.5
+      };
+    }
     
     // Send response to user
-    if (result.success) {
+    if (result.response) {
       await facebookService.sendTextMessage(senderId, result.response);
       
-      // Log AI reasoning for analytics
-      if (result.metadata) {
-        logger.info('🧠 AI Reasoning:', {
-          intents: result.metadata.analysis?.detected_intents,
-          customer_type: result.metadata.analysis?.customer_type,
-          action: result.metadata.decision?.action,
-          department: result.metadata.decision?.department,
-          quality_passed: result.metadata.quality_passed
-        });
-      }
+      // Log for analytics
+      logger.info('🧠 Response details:', {
+        intent: result.intent,
+        confidence: result.confidence,
+        escalate: result.escalate || false
+      });
     } else {
-      // Fallback if AI fails
-      await facebookService.sendTextMessage(senderId, result.response || 'حصل خطأ. من فضلك حاول مرة تانية أو تواصل معنا: 01124400797');
+      // Fallback if no response generated
+      await facebookService.sendTextMessage(senderId, 'عذراً، حصل خطأ. من فضلك حاول مرة تانية أو تواصل معنا: 01155501111');
     }
     
     logger.info('✓ Response sent', { 
       senderId,
-      source: result.source,
       intent: result.intent,
       confidence: result.confidence,
-      tokensUsed: result.tokensUsed || 0,
       isNewConversation: contextManager.isNewConversation(senderId)
     });
 
