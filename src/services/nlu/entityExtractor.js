@@ -93,15 +93,15 @@ class EntityExtractor {
       
       // Just units (implies 1)
       { 
-        regex: /\b(كيلو|كجم|كغم|كلو)\b/i, 
+        regex: /(كيلو|كجم|كغم|كلو)/i, 
         extract: () => ({ value: '1', unit: 'كجم', implied: true })
       },
       { 
-        regex: /\b(لتر|ليتر)\b/i, 
+        regex: /(لتر|ليتر)/i, 
         extract: () => ({ value: '1', unit: 'لتر', implied: true })
       },
       { 
-        regex: /\b(جالون|غالون|جلون)\b/i, 
+        regex: /(جالون|غالون|جلون)/i, 
         extract: () => ({ value: '1', unit: 'جالون', implied: true })
       },
       
