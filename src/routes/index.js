@@ -4,6 +4,8 @@
  */
 
 const express = require('express');
+const path = require('path');
+
 const router = express.Router();
 const webhookRoutes = require('./webhook');
 
@@ -30,9 +32,20 @@ router.get('/', (req, res) => {
     version: '1.0.0',
     endpoints: {
       health: '/health',
-      webhook: '/webhook'
+      webhook: '/webhook',
+      privacy: '/privacy'
     }
   });
+});
+
+/**
+ * Privacy Policy page
+ * Required for Meta/Facebook app review / live chat enablement in many cases.
+ * We serve it explicitly (in addition to express.static) to ensure it works
+ * across various hosting/proxy configurations.
+ */
+router.get(['/privacy', '/privacy.html', '/privacy-policy'], (req, res) => {
+  res.sendFile(path.join(__dirname, '..', '..', 'public', 'privacy.html'));
 });
 
 // Mount webhook routes
