@@ -5,6 +5,7 @@
 
 const express = require('express');
 const bodyParser = require('body-parser');
+const path = require('path');
 const logger = require('./utils/logger');
 const routes = require('./routes');
 const { notFoundHandler, errorHandler } = require('./middleware/errorHandler');
@@ -45,6 +46,10 @@ const createApp = () => {
   // Rate limiting (optional but recommended)
   // Uncomment in production to prevent abuse
   // app.use(rateLimitMiddleware);
+
+  // Serve static files (e.g., privacy policy page required by Meta/Facebook)
+  // `public/` lives at the repo root, so from `src/` we go one level up.
+  app.use(express.static(path.join(__dirname, '..', 'public')));
 
   // Mount all routes
   app.use('/', routes);
