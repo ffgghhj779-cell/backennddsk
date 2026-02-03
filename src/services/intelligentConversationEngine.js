@@ -17,7 +17,7 @@ class IntelligentConversationEngine {
   }
 
   /**
-   * Main entry point - process user message and generate response
+   * Main entry point - process user message and generate response - ENHANCED v2.1
    */
   async processMessage(userId, message) {
     try {
@@ -42,6 +42,13 @@ class IntelligentConversationEngine {
       const entities = entityExtractor.extractAll(message);
       contextMemory.updateEntities(userId, entities);
       
+      // 🔥 NEW: Check if this is an entity-only message in context
+      const isEntityOnly = this.isEntityOnlyMessage(message, entities, context);
+      if (isEntityOnly) {
+        // Treat as continuation of current flow
+        return this.handleEntityOnlyMessage(userId, message, entities, context);
+      }
+      
       // 5. Classify intent with context
       const intentResult = enhancedIntentClassifier.getPrimaryIntent(message, context);
       
@@ -52,8 +59,22 @@ class IntelligentConversationEngine {
         return specialCase;
       }
       
-      // 7. Route to appropriate handler
-      const result = await this.routeIntent(userId, message, intentResult, entities, context);
+      // 7. Route to appropriate handler with timeout protection
+      const routePromise = this.routeIntent(userId, message, intentResult, entities, context);
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('ROUTE_TIMEOUT')), 25000); // 25 second timeout
+      });
+      
+      let result;
+      try {
+        result = await Promise.race([routePromise, timeoutPromise]);
+      } catch (timeoutError) {
+        if (timeoutError.message === 'ROUTE_TIMEOUT') {
+          logger.error('Route handler timed out', { userId, intent: intentResult?.intent });
+          return this.generateTimeoutResponse(userId);
+        }
+        throw timeoutError;
+      }
       
       // 8. Update context with response
       contextMemory.updateIntent(userId, result.intent);
@@ -65,6 +86,55 @@ class IntelligentConversationEngine {
       logger.error('Error processing message:', error);
       return this.generateErrorResponse(userId);
     }
+  }
+
+  /**
+   * 🔥 NEW: Check if message is entity-only (like "كرتونة" or "2.8 كيلو")
+   */
+  isEntityOnlyMessage(message, entities, context) {
+    // Must be in an active flow
+    if (!context.mode || context.mode === 'general') {
+      return false;
+    }
+    
+    // Message should be short
+    if (message.length > 30) {
+      return false;
+    }
+    
+    // Should have at least one entity
+    if (!entities.size && !entities.quantity && !entities.product && !entities.brand) {
+      return false;
+    }
+    
+    // Check if message is ONLY entities (no verbs or complex phrases)
+    const normalized = message.toLowerCase().trim();
+    const hasActionWords = /عايز|محتاج|اشتري|ابغى|عندكم|فين|كام|بكام/.test(normalized);
+    
+    return !hasActionWords;
+  }
+
+  /**
+   * 🔥 NEW: Handle entity-only messages in context
+   */
+  async handleEntityOnlyMessage(userId, message, entities, context) {
+    logger.info('Handling entity-only message in context', { 
+      userId, 
+      entities: JSON.stringify(entities),
+      mode: context.mode 
+    });
+    
+    // Update entities in context
+    contextMemory.updateEntities(userId, entities);
+    
+    // Continue with the current flow
+    if (context.mode === 'product_inquiry' || context.mode === 'price_inquiry') {
+      return this.handleProductInquiry(userId, message, entities, context);
+    }
+    
+    // Default: treat as product inquiry
+    contextMemory.setMode(userId, 'product_inquiry', 'collecting_info');
+    return this.handleProductInquiry(userId, message, entities, context);
   }
 
   /**
@@ -440,10 +510,29 @@ class IntelligentConversationEngine {
   }
 
   /**
-   * Handle about company
+   * Handle about company - ENHANCED for bot identity questions
    */
   handleAboutCompany(userId, context) {
-    const response = `🎨 مجموعة العدوي للدهانات
+    // 🔥 NEW: Check if asking about bot specifically
+    const lastMessage = context.messageHistory?.[context.messageHistory.length - 1];
+    const isBotQuestion = lastMessage && /انت مين|مين انت|اسمك|عملك|صنعك/.test(lastMessage.message);
+    
+    let response = '';
+    
+    if (isBotQuestion) {
+      response = `أنا المساعد الذكي لمجموعة العدوي للدهانات! 🤖
+
+🎯 وظيفتي:
+• مساعدتك في معرفة المنتجات والأسعار
+• إرشادك لطريقة التواصل الصح
+• الرد على استفساراتك بسرعة
+
+📱 أنا متاح 24/7 عشان أخدمك!
+
+`;
+    }
+    
+    response += `🎨 مجموعة العدوي للدهانات
 
 📋 مين احنا:
 مستودع توزيع ووكيل معتمد لكبرى شركات الدهانات في مصر
@@ -484,15 +573,20 @@ class IntelligentConversationEngine {
   }
 
   /**
-   * Handle low confidence intent
+   * Handle low confidence intent - ENHANCED
    */
   handleLowConfidence(userId, message, intentResult, entities, context) {
     // We have some idea but not confident
     const possibleIntent = intentResult.intent;
     
-    // Try to make an educated guess based on context
+    // 🔥 NEW: Try to make an educated guess based on context
     if (context.mode === 'product_inquiry') {
       // In product flow - likely continuing
+      return this.handleProductInquiry(userId, message, entities, context);
+    }
+    
+    // 🔥 NEW: Check for entities even with low confidence
+    if (entities.product || entities.size || entities.quantity) {
       return this.handleProductInquiry(userId, message, entities, context);
     }
     
@@ -513,14 +607,90 @@ ${possibleIntent ? `يمكن تقصد ${this.getIntentDescription(possibleIntent
   }
 
   /**
-   * Handle completely unknown intent
+   * Handle completely unknown intent - ENHANCED v2.1
    */
   handleUnknownIntent(userId, message, entities, context) {
     // Last resort - but try to be helpful
     
-    // Check if we can infer anything from entities
+    // 🔥 NEW: Check if we can infer anything from entities
     if (entities.product) {
       return this.handleProductInquiry(userId, message, entities, context);
+    }
+    
+    // 🔥 NEW: Check if it's a size/quantity in context
+    if ((entities.size || entities.quantity) && context.product) {
+      return this.handleProductInquiry(userId, message, entities, context);
+    }
+    
+    // 🔥 NEW: Try to understand what user wants based on keywords
+    const normalized = message.toLowerCase();
+    
+    // Urgency keywords
+    if (/مستعجل|بسرعه|urgent|rush|quick|عاجل|ضروري/.test(normalized)) {
+      return {
+        response: `فهمت إنك مستعجل! 😊
+
+أسرع طريقة:
+📞 اتصل مباشرة: 01155501111
+💬 واتس: +201155501111
+
+أو قولي إيه اللي محتاجه وأنا هساعدك فوراً!`,
+        intent: 'urgency_detected',
+        confidence: 0.8
+      };
+    }
+    
+    // Vague "do you have" questions
+    if (/عندك|عندكم|في حاج|موجود|متوفر|available/.test(normalized)) {
+      return {
+        response: `أكيد عندنا! 😊
+
+احنا عندنا:
+📦 معجون (Putty)
+📦 فيلر (Filler)
+📦 برايمر (Primer)
+📦 ثنر (Thinner)
+📦 سبراي (Spray)
+📦 دوكو (Duco)
+
+قولي بالظبط عايز إيه وأنا هفيدك!`,
+        intent: 'vague_inquiry',
+        confidence: 0.7
+      };
+    }
+    
+    // Quality/recommendation questions
+    if (/احسن|أحسن|افضل|أفضل|ننصح|توصي|recommend|best|good/.test(normalized)) {
+      return {
+        response: `سؤال كويس! 🤔
+
+للتوصية بأفضل منتج، محتاج أعرف:
+• هتستخدمه في إيه؟ (سيارة، أثاث، مباني...)
+• ميزانيتك قد إيه؟
+
+أو كلم المختصين:
+📞 01155501111
+هيرشحولك الأنسب! 😊`,
+        intent: 'recommendation_request',
+        confidence: 0.75
+      };
+    }
+    
+    // Gibberish or very short unclear messages
+    if (message.length < 3 || /^[^\u0600-\u06FF\w\s]+$/.test(message)) {
+      return {
+        response: `مش فاهم قصدك! 🤔
+
+ممكن تكتب رسالتك بالعربي أو الإنجليزي؟
+
+أو إختار من دول:
+💰 الأسعار
+📦 المنتجات
+📍 العنوان
+📞 التواصل`,
+        intent: 'gibberish',
+        confidence: 0.5
+      };
     }
     
     const response = responseGenerator.generateResponse(userId, 'unknown', context);
@@ -578,6 +748,22 @@ ${possibleIntent ? `يمكن تقصد ${this.getIntentDescription(possibleIntent
 أو كلمنا مباشرة:
 📞 01155501111`,
       intent: 'error',
+      confidence: 0
+    };
+  }
+
+  /**
+   * Generate timeout response
+   */
+  generateTimeoutResponse(userId) {
+    return {
+      response: `عذراً، النظام بطيء شوية دلوقتي! ⏱️
+
+ممكن تعيد رسالتك؟ أو:
+📞 كلمنا مباشرة: 01155501111
+
+هنرد عليك بسرعة! 😊`,
+      intent: 'timeout',
       confidence: 0
     };
   }

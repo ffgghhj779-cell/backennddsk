@@ -68,6 +68,7 @@ const conversationContext = new ConversationContext();
 
 /**
  * Generates AI response using OpenAI Chat Completion API
+ * WITH RETRY LOGIC for reliability
  * 
  * @param {string} userMessage - User's message text
  * @param {string} userId - User ID for context management
@@ -79,77 +80,124 @@ const generateAIResponse = async (userMessage, userId, options = {}) => {
     throw new Error('OpenAI is not configured. Please set the OPENAI_API_KEY environment variable.');
   }
   
-  try {
-    logger.info(`Generating AI response for user ${userId}`);
+  const maxRetries = 3;
+  let lastError;
 
-    // Build system message with bot personality
-    const systemMessage = {
-      role: 'system',
-      content: `You are ${config.bot.name}, a ${config.bot.personality}. 
-Keep your responses concise and friendly (under 200 words). 
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      logger.info(`Generating AI response for user ${userId} (attempt ${attempt}/${maxRetries})`);
+
+      // Build system message with bot personality
+      const systemMessage = {
+        role: 'system',
+        content: `You are ${config.bot.name}, a ${config.bot.personality}. 
+Keep your responses concise and friendly (under 300 words). 
 You are chatting via Facebook Messenger, so keep responses conversational and engaging.
 If you don't know something, be honest about it.
 ${options.systemContext || ''}`
-    };
+      };
 
-    // Get conversation history
-    const history = conversationContext.getHistory(userId);
+      // Get conversation history
+      const history = conversationContext.getHistory(userId);
 
-    // Add user message to history
-    conversationContext.addMessage(userId, 'user', userMessage);
+      // Add user message to history (only on first attempt)
+      if (attempt === 1) {
+        conversationContext.addMessage(userId, 'user', userMessage);
+      }
 
-    // Prepare messages for API
-    const messages = [
-      systemMessage,
-      ...history
-    ];
+      // Prepare messages for API
+      const messages = [
+        systemMessage,
+        ...history
+      ];
 
-    logger.debug('OpenAI request', {
-      userId,
-      messageCount: messages.length,
-      model: config.openai.model
-    });
+      logger.debug('OpenAI request', {
+        userId,
+        messageCount: messages.length,
+        model: config.openai.model,
+        attempt
+      });
 
-    // Call OpenAI API
-    const completion = await openai.chat.completions.create({
-      model: config.openai.model,
-      messages: messages,
-      max_tokens: config.openai.maxTokens,
-      temperature: config.openai.temperature,
-      user: userId // OpenAI uses this for abuse detection
-    });
+      // Call OpenAI API with timeout protection
+      const timeoutMs = 30000; // 30 seconds timeout
+      const completionPromise = openai.chat.completions.create({
+        model: config.openai.model,
+        messages: messages,
+        max_tokens: config.openai.maxTokens,
+        temperature: config.openai.temperature,
+        user: userId // OpenAI uses this for abuse detection
+      });
 
-    const aiResponse = completion.choices[0].message.content.trim();
+      // Create timeout promise
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('OpenAI_TIMEOUT')), timeoutMs);
+      });
 
-    // Add assistant response to history
-    conversationContext.addMessage(userId, 'assistant', aiResponse);
+      // Race between API call and timeout
+      const completion = await Promise.race([completionPromise, timeoutPromise]);
 
-    logger.info(`AI response generated successfully for user ${userId}`, {
-      tokensUsed: completion.usage.total_tokens,
-      responseLength: aiResponse.length
-    });
+      const aiResponse = completion.choices[0].message.content.trim();
 
-    return aiResponse;
-  } catch (error) {
-    logger.error('Error generating AI response:', {
-      error: error.message,
-      userId,
-      code: error.code,
-      type: error.type
-    });
+      // Add assistant response to history
+      conversationContext.addMessage(userId, 'assistant', aiResponse);
 
-    // Handle specific OpenAI errors
-    if (error.code === 'insufficient_quota') {
-      throw new Error('AI service quota exceeded. Please contact support.');
-    } else if (error.code === 'invalid_api_key') {
-      throw new Error('AI service configuration error. Please contact support.');
-    } else if (error.code === 'rate_limit_exceeded') {
-      throw new Error('Too many requests. Please try again in a moment.');
+      logger.info(`AI response generated successfully for user ${userId}`, {
+        tokensUsed: completion.usage.total_tokens,
+        responseLength: aiResponse.length,
+        attempt
+      });
+
+      return aiResponse;
+
+    } catch (error) {
+      lastError = error;
+      
+      logger.error('Error generating AI response:', {
+        error: error.message,
+        userId,
+        code: error.code,
+        type: error.type,
+        attempt
+      });
+
+      // Handle timeout specifically
+      if (error.message === 'OpenAI_TIMEOUT') {
+        logger.warn(`OpenAI request timed out (attempt ${attempt}/${maxRetries})`);
+        if (attempt < maxRetries) {
+          const waitTime = 2000; // Wait 2 seconds before retry
+          logger.info(`Retrying after ${waitTime}ms...`);
+          await new Promise(resolve => setTimeout(resolve, waitTime));
+          continue;
+        }
+        throw new Error('AI service is taking too long to respond. Please try again.');
+      }
+
+      // Handle specific OpenAI errors - don't retry these
+      if (error.code === 'insufficient_quota') {
+        throw new Error('AI service quota exceeded. Please contact support.');
+      } else if (error.code === 'invalid_api_key') {
+        throw new Error('AI service configuration error. Please contact support.');
+      }
+
+      // For rate limits and network errors, retry with exponential backoff
+      if (error.code === 'rate_limit_exceeded' || error.code === 'ECONNRESET' || error.code === 'ETIMEDOUT') {
+        if (attempt < maxRetries) {
+          const waitTime = Math.pow(2, attempt) * 1000; // Exponential backoff
+          logger.info(`Retrying after ${waitTime}ms...`);
+          await new Promise(resolve => setTimeout(resolve, waitTime));
+          continue;
+        }
+      }
+
+      // If this was the last attempt, throw
+      if (attempt === maxRetries) {
+        throw new Error('Unable to generate AI response after multiple attempts. Please try again later.');
+      }
     }
-
-    // Generic error
-    throw new Error('Unable to generate AI response. Please try again later.');
   }
+
+  // This should never be reached, but just in case
+  throw lastError || new Error('Unable to generate AI response. Please try again later.');
 };
 
 /**
